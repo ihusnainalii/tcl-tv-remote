@@ -15,7 +15,7 @@ struct TCLRemoteApp: App {
 /// Status bar item + popover. Unlike MenuBarExtra, a popover stays anchored to the icon and
 /// resizes itself (animated) to the SwiftUI content's ideal size.
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSWindowDelegate {
     static private(set) weak var shared: AppDelegate?
     let store = Store()
     private var settingsWindow: NSWindow?
@@ -33,11 +33,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             w.title = "TCL Remote Settings"
             w.styleMask = [.titled, .closable, .miniaturizable]
             w.isReleasedWhenClosed = false
+            w.delegate = self
             w.center()
             settingsWindow = w
         }
-        NSApp.activate()
+        // A menu bar-only app can't pull a window to the front politely on macOS 14+, so become a
+        // regular app (Dock icon) while Settings is open, then go back to menu bar-only on close.
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
+        settingsWindow?.orderFrontRegardless()
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        guard (notification.object as? NSWindow) === settingsWindow else { return }
+        NSApp.setActivationPolicy(.accessory)
     }
     private var statusItem: NSStatusItem!
     private let popover = NSPopover()
@@ -55,6 +65,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.action = #selector(toggle)
         statusItem.button?.target = self
+
+        if CommandLine.arguments.contains("--settings") { showSettings() } // handy for testing
 
         linkObserver = store.$link.sink { [weak self] link in
             let name = link == .connected ? "appletvremote.gen4.fill" : "appletvremote.gen4"
