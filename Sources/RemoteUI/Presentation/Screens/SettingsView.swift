@@ -129,16 +129,18 @@ private struct GeneralSettings: View {
                 Divider()
                 ToggleRow(title: L10n.Settings.notifications, isOn: $notify)
             }
-            Card(title: L10n.Settings.keyboard) {
-                InfoRow(title: L10n.Settings.Keyboard.navigate, value: "← ↑ → ↓")
-                Divider()
-                InfoRow(title: L10n.Settings.Keyboard.okBack, value: "⏎ · esc")
-                Divider()
-                InfoRow(title: L10n.Settings.Keyboard.backspace, value: "⌫")
-                Divider()
-                InfoRow(title: L10n.Settings.Keyboard.playMuteHome, value: "␣ · M · H")
-                Divider()
-                InfoRow(title: L10n.Settings.Keyboard.volume, value: "+ / −")
+            if PlatformInfo.showsKeyboardShortcuts {
+                Card(title: L10n.Settings.keyboard) {
+                    InfoRow(title: L10n.Settings.Keyboard.navigate, value: "← ↑ → ↓")
+                    Divider()
+                    InfoRow(title: L10n.Settings.Keyboard.okBack, value: "⏎ · esc")
+                    Divider()
+                    InfoRow(title: L10n.Settings.Keyboard.backspace, value: "⌫")
+                    Divider()
+                    InfoRow(title: L10n.Settings.Keyboard.playMuteHome, value: "␣ · M · H")
+                    Divider()
+                    InfoRow(title: L10n.Settings.Keyboard.volume, value: "+ / −")
+                }
             }
         }
     }

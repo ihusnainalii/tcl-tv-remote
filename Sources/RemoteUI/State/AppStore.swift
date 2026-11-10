@@ -61,9 +61,10 @@ public final class Store: ObservableObject {
     func scan() {
         guard !scanning else { return }
         withAnimation(.snappy) { scanning = true }
-        Task {
-            await discovery.scan { [weak self] tv in self?.discovered(tv) }
-            withAnimation(.snappy) { scanning = false }
+        Task { [weak self] in
+            guard let discovery = self?.discovery else { return }
+            await discovery.scan { tv in self?.discovered(tv) }
+            withAnimation(.snappy) { self?.scanning = false }
         }
     }
 

@@ -57,6 +57,15 @@ enum Haptics {
 }
 
 enum PlatformInfo {
+    /// Keyboard shortcuts are worth listing on Mac and iPad (hardware keyboards), not on iPhone.
+    @MainActor static var showsKeyboardShortcuts: Bool {
+        #if os(macOS)
+        true
+        #else
+        UIDevice.current.userInterfaceIdiom == .pad
+        #endif
+    }
+
     /// Features that only make sense in a Mac menu bar app (quit, login item, update check).
     static var isMac: Bool {
         #if os(macOS)
