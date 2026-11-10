@@ -211,3 +211,11 @@
 "mobile.empty.searching" = "Looking for TVs…";
 "mobile.empty.searchingHint" = "Searching your Wi-Fi for TCL TVs.";
 "mobile.scanForTVs" = "Scan for TVs";
+
+/* Face ID lock (iPhone and iPad) */
+"lock.setting" = "Require Face ID";
+"lock.title" = "TCL Remote is locked";
+"lock.subtitle" = "Unlock to control your TV.";
+"lock.failed" = "Couldn't verify it's you. Try again.";
+"lock.unlock" = "Unlock";
+"lock.reason" = "Unlock TCL Remote";

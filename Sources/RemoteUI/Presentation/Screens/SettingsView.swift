@@ -104,6 +104,7 @@ private struct GeneralSettings: View {
     @EnvironmentObject var s: Store
     @State private var hasKeyboard = PlatformInfo.showsKeyboardShortcuts
     @AppStorage("autoConnect") private var autoConnect = true
+    @AppStorage("requireFaceID") private var requireFaceID = false
     @AppStorage("notify") private var notify = true
     @AppStorage("retrySeconds") private var retry = 10.0
 
@@ -115,6 +116,10 @@ private struct GeneralSettings: View {
                     Divider()
                 }
                 ToggleRow(title: L10n.Settings.connectAutomatically, isOn: $autoConnect)
+                if !PlatformInfo.isMac {
+                    Divider()
+                    ToggleRow(title: L10n.Lock.setting, isOn: $requireFaceID)
+                }
             }
             Card(title: L10n.Settings.connection) {
                 HStack {

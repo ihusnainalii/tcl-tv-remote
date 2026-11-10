@@ -58,6 +58,7 @@ struct MobileRootView: View {
             PairingView().padding(24).presentationDetents([.medium]).environmentObject(s)
         }
         .overlay(alignment: .bottom) { Toast().padding(.bottom, 90) }
+        .modifier(AppLockModifier())
         .fullScreenCover(isPresented: Binding(get: { !onboarded }, set: { if !$0 { onboarded = true } })) {
             OnboardingView { onboarded = true; SystemNotifications.requestAccess() }
         }

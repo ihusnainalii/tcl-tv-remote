@@ -33,6 +33,7 @@ targets:
           [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown,
            UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         NSLocalNetworkUsageDescription: TCL Remote finds and controls TVs on your local network.
+        NSFaceIDUsageDescription: Unlock TCL Remote with Face ID when the lock is turned on in Settings.
         NSBonjourServices: [_androidtvremote2._tcp]
         ITSAppUsesNonExemptEncryption: false
         CFBundleURLTypes:

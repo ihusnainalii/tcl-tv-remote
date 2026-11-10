@@ -162,6 +162,20 @@ public enum L10n {
     /// TVs
     public static let tvs = L10n.tr("Localizable", "header.tvs", fallback: "TVs")
   }
+  public enum Lock {
+    /// Couldn't verify it's you. Try again.
+    public static let failed = L10n.tr("Localizable", "lock.failed", fallback: "Couldn't verify it's you. Try again.")
+    /// Unlock TCL Remote
+    public static let reason = L10n.tr("Localizable", "lock.reason", fallback: "Unlock TCL Remote")
+    /// Face ID lock (iPhone and iPad)
+    public static let setting = L10n.tr("Localizable", "lock.setting", fallback: "Require Face ID")
+    /// Unlock to control your TV.
+    public static let subtitle = L10n.tr("Localizable", "lock.subtitle", fallback: "Unlock to control your TV.")
+    /// TCL Remote is locked
+    public static let title = L10n.tr("Localizable", "lock.title", fallback: "TCL Remote is locked")
+    /// Unlock
+    public static let unlock = L10n.tr("Localizable", "lock.unlock", fallback: "Unlock")
+  }
   public enum Menu {
     /// Find TVs…
     public static let findTVs = L10n.tr("Localizable", "menu.findTVs", fallback: "Find TVs…")
