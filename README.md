@@ -68,9 +68,9 @@ A native iPhone and iPad app shares every rule, protocol driver and component wi
 </p>
 
 - **Tab bar** with Remote, Apps, Keys and Settings. iPhone shows it at the bottom; iPadOS shows it at the top.
-- **Remote tab:** a large arrow pad, or a **touchpad**: swipe to move (each swipe step is one arrow press, with haptics) and tap to select. Big buttons for back, home, search, settings, play/pause and media, plus volume and channel rockers and the live volume bar.
+- **Remote tab:** fills the screen with no scrolling. It has a large arrow pad or a **touchpad** (swipe to move, with each swipe step one arrow press and a haptic tap; tap to select), big buttons for back, home, search and settings, a volume/media/channel cluster, the live volume bar, and **a row of your apps** at the bottom. Everything scales to the screen, from iPhone SE to Pro Max.
 - **TV switcher** in the navigation bar: switch between saved TVs or find new ones. Pairing opens as a sheet.
-- **iPad:** a two-column remote, with controls on the left and your apps on the right.
+- **iPad:** a two-column remote. The controls fill the left column; your apps, the live keyboard and the number pad fill the right.
 - **Keys tab:** a live keyboard for the TV's text boxes, a number pad, and extra keys (guide, captions, stop, power on/off).
 - With a hardware keyboard attached, the same shortcuts as on the Mac work, and Settings lists them.
 

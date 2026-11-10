@@ -2,7 +2,9 @@ import SwiftUI
 import TVKit
 
 #if os(iOS)
-/// The Remote tab: big touch targets, D-pad or touchpad, and on iPad a second column with apps.
+/// The Remote tab. Sized from the screen instead of scrolling, so the controls fill the space:
+/// control surface (D-pad or touchpad) on top, utility row, volume/media cluster, app shortcuts.
+/// On iPad, a second column holds apps and the keyboard so neither side is left empty.
 struct MobileRemoteTab: View {
     @EnvironmentObject var s: Store
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -12,25 +14,25 @@ struct MobileRemoteTab: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            Group {
                 if s.tv == nil {
-                    NoTVView().padding(.horizontal, 20)
-                } else if sizeClass == .regular {
-                    HStack(alignment: .top, spacing: 40) {
-                        controls(big: true).frame(maxWidth: 460)
-                        VStack(alignment: .leading, spacing: 14) {
-                            Text(L10n.Mobile.Tab.apps.uppercased()).font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
-                            AppsGrid(iconSize: 64, columns: 4, maxHeight: .infinity)
-                        }
-                        .frame(maxWidth: 440)
-                    }
-                    .padding(32)
-                    .frame(maxWidth: .infinity)
+                    ScrollView { NoTVView().padding(.horizontal, 20) }
                 } else {
-                    controls(big: false).padding(.horizontal, 20).padding(.bottom, 24)
+                    GeometryReader { geo in
+                        if sizeClass == .regular {
+                            HStack(alignment: .top, spacing: 36) {
+                                RemoteControls(mode: $mode, size: geo.size.height, width: min(460, geo.size.width * 0.46))
+                                    .frame(width: min(460, geo.size.width * 0.46))
+                                IPadSideColumn()
+                            }
+                            .padding(.horizontal, 32).padding(.vertical, 16)
+                        } else {
+                            RemoteControls(mode: $mode, size: geo.size.height, width: geo.size.width - 40)
+                                .padding(.horizontal, 20)
+                        }
+                    }
                 }
             }
-            .scrollBounceBehavior(.basedOnSize)
             .navigationTitle(L10n.Mobile.Tab.remote)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -40,58 +42,133 @@ struct MobileRemoteTab: View {
         }
         .remoteKeyboardShortcuts()
     }
+}
 
-    private func controls(big: Bool) -> some View {
-        VStack(spacing: 22) {
-            ConnectionBanner() // stays tappable: it holds the Pair button
-            buttons(big: big).disabled(s.link == .needsPairing).opacity(s.link == .needsPairing ? 0.45 : 1)
-        }
-    }
+/// Everything on the Remote tab's main column, scaled to the available height.
+private struct RemoteControls: View {
+    @EnvironmentObject var s: Store
+    @Binding var mode: MobileRemoteTab.ControlMode
+    let size: CGFloat // available height
+    let width: CGFloat
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
-    private func buttons(big: Bool) -> some View {
-        let key: CGFloat = big ? 64 : 56, small: CGFloat = big ? 52 : 46, pad: CGFloat = big ? 320 : 260
-        return VStack(spacing: big ? 26 : 22) {
-            HStack(spacing: 12) {
-                Picker("", selection: $mode) {
-                    Label(L10n.Mobile.Mode.buttons, systemImage: "circle.grid.cross").tag(ControlMode.dpad)
-                    Label(L10n.Mobile.Mode.touchpad, systemImage: "hand.point.up.left").tag(ControlMode.touchpad)
+    /// Shrinks everything a little on short screens (iPhone SE) and grows it on tall ones.
+    private var unit: CGFloat { min(max(size / 760, 0.72), 1.2) }
+    private var key: CGFloat { 56 * unit }
+    private var small: CGFloat { 46 * unit }
+    private var pad: CGFloat { min(width, max(190, size * 0.36)) }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ConnectionBanner().padding(.top, 8)
+
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    Picker("", selection: $mode) {
+                        Label(L10n.Mobile.Mode.buttons, systemImage: "circle.grid.cross").tag(MobileRemoteTab.ControlMode.dpad)
+                        Label(L10n.Mobile.Mode.touchpad, systemImage: "hand.point.up.left").tag(MobileRemoteTab.ControlMode.touchpad)
+                    }
+                    .pickerStyle(.segmented).labelsHidden()
+                    InputMenu(size: 36)
                 }
-                .pickerStyle(.segmented).labelsHidden()
-                InputMenu(size: 40)
-            }
+                .padding(.top, 10)
 
-            Group {
-                switch mode {
-                case .dpad: DPad(diameter: pad).frame(height: pad + 20)
-                case .touchpad: Touchpad().frame(height: pad + 20)
-                }
-            }
-            .transition(.opacity.combined(with: .scale(scale: 0.97)))
-            .animation(.spring(response: 0.4, dampingFraction: 0.85), value: mode)
+                Spacer(minLength: 10)
 
-            HStack(spacing: 12) {
-                RemoteKey(.back, "arrow.uturn.backward", size: key, iconSize: 18)
-                RemoteKey(.home, "house.fill", size: key, iconSize: 18)
-                RemoteKey(.search, "magnifyingglass", size: key, iconSize: 18)
-                RemoteKey(.settings, "gearshape", size: key, iconSize: 18)
-            }
-
-            HStack(alignment: .center, spacing: 12) {
-                Rocker(up: .volUp, down: .volDown, upIcon: "speaker.plus.fill", downIcon: "speaker.minus.fill",
-                       label: L10n.Remote.volumeShort, scale: big ? 1.55 : 1.35)
-                VStack(spacing: 10) {
-                    RemoteKey(.playPause, "playpause.fill", size: key, iconSize: 20)
-                    HStack(spacing: 10) {
-                        RemoteKey(.rewind, "backward.fill", size: small, iconSize: 15)
-                        RemoteKey(.mute, "speaker.slash.fill", size: small, iconSize: 15)
-                        RemoteKey(.forward, "forward.fill", size: small, iconSize: 15)
+                Group {
+                    switch mode {
+                    case .dpad: DPad(diameter: pad).frame(maxWidth: .infinity)
+                    case .touchpad: Touchpad().frame(height: pad)
                     }
                 }
-                Rocker(up: .chUp, down: .chDown, upIcon: "chevron.up", downIcon: "chevron.down",
-                       label: L10n.Remote.channelShort, scale: big ? 1.55 : 1.35)
-            }
+                .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                .animation(.spring(response: 0.4, dampingFraction: 0.85), value: mode)
 
-            if let v = s.volume { VolumeBar(volume: v).padding(.horizontal, 4) }
+                Spacer(minLength: 10)
+
+                HStack(spacing: 10) {
+                    RemoteKey(.back, "arrow.uturn.backward", size: key, iconSize: 18 * unit)
+                    RemoteKey(.home, "house.fill", size: key, iconSize: 18 * unit)
+                    RemoteKey(.search, "magnifyingglass", size: key, iconSize: 18 * unit)
+                    RemoteKey(.settings, "gearshape", size: key, iconSize: 18 * unit)
+                }
+
+                Spacer(minLength: 10)
+
+                HStack(alignment: .center, spacing: 10) {
+                    Rocker(up: .volUp, down: .volDown, upIcon: "speaker.plus.fill", downIcon: "speaker.minus.fill",
+                           label: L10n.Remote.volumeShort, scale: 1.3 * unit)
+                    VStack(spacing: 10) {
+                        RemoteKey(.playPause, "playpause.fill", size: key, iconSize: 20 * unit)
+                        HStack(spacing: 10) {
+                            RemoteKey(.rewind, "backward.fill", size: small, iconSize: 15 * unit)
+                            RemoteKey(.mute, "speaker.slash.fill", size: small, iconSize: 15 * unit)
+                            RemoteKey(.forward, "forward.fill", size: small, iconSize: 15 * unit)
+                        }
+                    }
+                    Rocker(up: .chUp, down: .chDown, upIcon: "chevron.up", downIcon: "chevron.down",
+                           label: L10n.Remote.channelShort, scale: 1.3 * unit)
+                }
+
+                if let v = s.volume { VolumeBar(volume: v).padding(.horizontal, 4).padding(.top, 12) }
+
+                Spacer(minLength: 10)
+
+                // iPad shows apps in the side column instead.
+                if sizeClass != .regular { AppStrip(iconSize: 50 * unit).padding(.bottom, 10) }
+            }
+            .disabled(s.link == .needsPairing)
+            .opacity(s.link == .needsPairing ? 0.45 : 1)
+        }
+    }
+}
+
+/// Horizontally scrolling app shortcuts (favorites and recents first), a tap from the remote.
+private struct AppStrip: View {
+    @EnvironmentObject var s: Store
+    let iconSize: CGFloat
+
+    var body: some View {
+        if !s.displayedApps.isEmpty {
+            ScrollView(.horizontal) {
+                HStack(spacing: 14) {
+                    ForEach(s.displayedApps) { app in
+                        Button { s.launch(app) } label: {
+                            VStack(spacing: 4) {
+                                AppIcon(app: app, tint: .gray, size: iconSize)
+                                Text(app.name).font(.system(size: 10, weight: .medium)).lineLimit(1)
+                                    .frame(width: iconSize + 14)
+                            }
+                        }
+                        .buttonStyle(PressStyle())
+                        .accessibilityLabel(L10n.Apps.open(app.name))
+                    }
+                }
+                .padding(.horizontal, 2).padding(.vertical, 4)
+            }
+            .scrollIndicators(.never)
+        }
+    }
+}
+
+/// iPad's second column: apps on top, then typing and the number pad.
+private struct IPadSideColumn: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 26) {
+                section(L10n.Mobile.Tab.apps) { AppsGrid(iconSize: 60, columns: 5, maxHeight: .infinity) }
+                section(L10n.Remote.Tab.type) { TypePad(large: true) }
+                section(L10n.Remote.Tab.keypad) { KeypadGrid(height: 52) }
+            }
+            .padding(.vertical, 12)
+        }
+        .scrollIndicators(.never)
+    }
+
+    func section<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title.uppercased()).font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
+            content()
         }
     }
 }
