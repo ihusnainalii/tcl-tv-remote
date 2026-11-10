@@ -1,5 +1,9 @@
 name: CI
 
+# Staged pipeline. Each job is a required check on main, so a PR merges only when all pass:
+#   Build -> Tests -> Coverage
+#                  -> App bundle
+
 on:
   pull_request:
   push:
@@ -13,21 +17,33 @@ env:
   COVERAGE_MIN: 90   # TVKit line coverage floor (currently ~97%)
 
 jobs:
+  build:
+    name: Build
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile package and tests
+        run: swift build --build-tests
+
   test:
+    name: Tests
+    needs: build
     runs-on: macos-15
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
-      - name: Test
+      - name: Run tests
         run: swift test --parallel --enable-code-coverage --xunit-output .build/tests.xml
 
       - name: Report test results
         if: always()   # annotate failures on the PR even when tests fail
         run: python3 scripts/ci_report.py tests .build/tests.xml .build/tests-swift-testing.xml
 
-      - name: Coverage gate
-        run: python3 scripts/ci_report.py coverage "$(swift test --show-codecov-path)" --min "$COVERAGE_MIN"
+      - name: Collect coverage data
+        if: success()
+        run: cp "$(swift test --show-codecov-path)" coverage.json
 
       - name: Upload test report
         if: always()
@@ -37,5 +53,39 @@ jobs:
           path: .build/tests*.xml
           if-no-files-found: ignore
 
+      - name: Upload coverage data
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.json
+
+  coverage:
+    name: Coverage
+    needs: test
+    runs-on: ubuntu-latest   # just reads the report; no need for a Mac
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage
+      - name: Coverage gate
+        run: python3 scripts/ci_report.py coverage coverage.json --min "$COVERAGE_MIN"
+
+  app:
+    name: App bundle
+    needs: test
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
       - name: Build universal app
         run: scripts/build.sh
+      - name: Zip app
+        run: cd build && ditto -c -k --keepParent "TCL Remote.app" TCLRemote.zip
+      - name: Upload app
+        uses: actions/upload-artifact@v4
+        with:
+          name: TCLRemote-app
+          path: build/TCLRemote.zip
