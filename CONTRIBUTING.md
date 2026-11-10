@@ -15,10 +15,14 @@ Install the tools: `brew install swiftlint swiftgen`.
 
 Changes to `main` go through pull requests; direct pushes are blocked.
 
+## iPhone and iPad
+
+`brew install xcodegen`, then `cd iOS && xcodegen` and open `TCLRemoteiOS.xcodeproj`. Shared UI changes go in `Sources/RemoteUI`; touch-only layout goes in `Presentation/Mobile` (compiled for iOS only). CI builds the iOS app on every pull request.
+
 ## Where code goes
 
 - **TV protocols, discovery, rules and storage** go in `Sources/TVKit`, which has no UI. New rules belong in `TVLibrary`, a value type, and need unit tests.
-- **UI and app wiring** go in `Sources/TCLRemote`. Views read from `Store`, and `Store` coordinates TVKit and the system services.
+- **UI and app state** go in `Sources/RemoteUI`, shared by the Mac and iOS apps. Views read from `Store`, and `Store` coordinates TVKit and the system services. `Sources/TCLRemote` and `iOS/App` are thin app shells.
 - **A new TV platform** needs a driver conforming to `TVRemote`, plus `PairingCapable` and/or `StateReporting` if it supports them, and one case in `RemoteFactory`.
 
 See [Architecture](README.md#architecture) for the full layout.

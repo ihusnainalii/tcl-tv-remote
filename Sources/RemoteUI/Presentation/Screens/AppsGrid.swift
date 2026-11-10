@@ -3,6 +3,9 @@ import TVKit
 
 struct AppsGrid: View {
     @EnvironmentObject var s: Store
+    var iconSize: CGFloat = 38
+    var columns = 3
+    var maxHeight: CGFloat = 220
     @State private var shown = false
     @State private var query = ""
     @State private var adding = false
@@ -23,8 +26,8 @@ struct AppsGrid: View {
             if s.link != .connected && s.displayedApps.isEmpty {
                 Text(L10n.Apps.connectToSee).font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 60)
             } else {
-                FitScroll(maxHeight: 220) {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                FitScroll(maxHeight: maxHeight) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: columns), spacing: 8) {
                         ForEach(Array(apps.enumerated()), id: \.element.id) { i, app in
                             tile(app)
                                 .scaleEffect(shown ? 1 : 0.6).opacity(shown ? 1 : 0)
@@ -42,7 +45,7 @@ struct AppsGrid: View {
     func tile(_ app: TVApp) -> some View {
         Button { s.launch(app) } label: {
             VStack(spacing: 5) {
-                AppIcon(app: app, tint: tint(app.name))
+                AppIcon(app: app, tint: tint(app.name), size: iconSize)
                     .overlay(alignment: .topTrailing) {
                         if s.isFavorite(app) {
                             Image(systemName: "star.fill").font(.system(size: 8)).foregroundStyle(.yellow)
@@ -50,9 +53,9 @@ struct AppsGrid: View {
                                 .transition(.scale)
                         }
                     }
-                Text(app.name).font(.system(size: 10, weight: .medium)).lineLimit(1)
+                Text(app.name).font(.system(size: max(10, iconSize * 0.24), weight: .medium)).lineLimit(1)
             }
-            .frame(maxWidth: .infinity, minHeight: 68, maxHeight: 68)
+            .frame(maxWidth: .infinity, minHeight: iconSize + 30, maxHeight: iconSize + 30)
         }
         .buttonStyle(PressStyle())
         .accessibilityLabel(L10n.Apps.open(app.name))
@@ -66,16 +69,19 @@ struct AppsGrid: View {
         Button { adding = true } label: {
             VStack(spacing: 5) {
                 Image(systemName: "plus").font(.system(size: 15, weight: .semibold))
-                    .frame(width: 38, height: 38)
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [3])))
+                    .frame(width: iconSize, height: iconSize)
+                    .overlay(RoundedRectangle(cornerRadius: iconSize * 0.26).strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [3])))
                     .foregroundStyle(.secondary)
                 Text(L10n.Common.add).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity, minHeight: 68, maxHeight: 68)
+            .frame(maxWidth: .infinity, minHeight: iconSize + 30, maxHeight: iconSize + 30)
         }
         .buttonStyle(PressStyle())
         .accessibilityLabel(L10n.Apps.addAnApp)
-        .popover(isPresented: $adding, arrowEdge: .bottom) { AppPicker().environmentObject(s) }
+        .popover(isPresented: $adding, arrowEdge: .bottom) {
+            // Mac: a popover. iPhone: a resizable sheet (popovers become sheets there).
+            AppPicker().environmentObject(s).presentationDetents([.medium, .large])
+        }
     }
 
     func tint(_ name: String) -> Color {
@@ -91,6 +97,7 @@ struct AppsGrid: View {
 struct AppIcon: View {
     let app: TVApp
     let tint: Color
+    var size: CGFloat = 38
     @State private var url: URL?
 
     var body: some View {
@@ -100,14 +107,14 @@ struct AppIcon: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.9)))
             } else {
                 Text(String(app.name.prefix(1)))
-                    .font(.system(size: 17, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                    .font(.system(size: size * 0.45, weight: .bold, design: .rounded)).foregroundStyle(.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(tint.gradient)
             }
         }
-        .frame(width: 38, height: 38)
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Theme.stroke, lineWidth: 0.5))
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: size * 0.26, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: size * 0.26, style: .continuous).stroke(Theme.stroke, lineWidth: 0.5))
         .task(id: app.id) { url = await AppIconResolver.shared.icon(for: app) }
     }
 }
@@ -116,6 +123,7 @@ struct AppIcon: View {
 /// TV apps, plus a custom link for anything else.
 struct AppPicker: View {
     @EnvironmentObject var s: Store
+    @Environment(\.dismiss) private var dismiss
     @State private var query = ""
     @State private var showCustom = false
     @State private var name = ""
@@ -129,7 +137,11 @@ struct AppPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(L10n.Apps.Picker.title).font(.headline)
+            HStack {
+                Text(L10n.Apps.Picker.title).font(.headline)
+                Spacer()
+                if !PlatformInfo.isMac { Button(L10n.Common.done) { dismiss() }.fontWeight(.semibold) }
+            }
             Text(L10n.Apps.Picker.explanation)
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
 
@@ -181,6 +193,7 @@ struct AppPicker: View {
             .font(.callout)
         }
         .padding(14)
-        .frame(width: 300)
+        .frame(width: PlatformInfo.isMac ? 300 : nil)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }

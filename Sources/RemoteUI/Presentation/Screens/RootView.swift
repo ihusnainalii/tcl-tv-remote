@@ -23,12 +23,11 @@ public struct RootView: View {
                 .fixedSize(horizontal: false, vertical: true) // popover sizes itself to this ideal height
                 .themed()
         case .fullScreen:
-            ScrollView {
-                content.frame(maxWidth: 440).frame(maxWidth: .infinity) // centered column on iPad
-            }
-            .scrollBounceBehavior(.basedOnSize)
-            .background(.background.secondary)
-            .themed()
+            #if os(iOS)
+            MobileRootView()
+            #else
+            content.themed()
+            #endif
         }
     }
 

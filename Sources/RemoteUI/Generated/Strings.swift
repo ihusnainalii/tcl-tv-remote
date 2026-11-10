@@ -81,6 +81,8 @@ public enum L10n {
     public static let addToFavorites = L10n.tr("Localizable", "common.addToFavorites", fallback: "Add to Favorites")
     /// Shared
     public static let cancel = L10n.tr("Localizable", "common.cancel", fallback: "Cancel")
+    /// Done
+    public static let done = L10n.tr("Localizable", "common.done", fallback: "Done")
     /// Favorite
     public static let favorite = L10n.tr("Localizable", "common.favorite", fallback: "Favorite")
     /// Name
@@ -145,6 +147,38 @@ public enum L10n {
     public static let quit = L10n.tr("Localizable", "menu.quit", fallback: "Quit TCL Remote")
     /// Settings…
     public static let settings = L10n.tr("Localizable", "menu.settings", fallback: "Settings…")
+  }
+  public enum Mobile {
+    /// Find TVs
+    public static let findTVs = L10n.tr("Localizable", "mobile.findTVs", fallback: "Find TVs")
+    /// TVs
+    public static let tvs = L10n.tr("Localizable", "mobile.tvs", fallback: "TVs")
+    public enum Mode {
+      /// Buttons
+      public static let buttons = L10n.tr("Localizable", "mobile.mode.buttons", fallback: "Buttons")
+      /// Touchpad
+      public static let touchpad = L10n.tr("Localizable", "mobile.mode.touchpad", fallback: "Touchpad")
+    }
+    public enum Tab {
+      /// Apps
+      public static let apps = L10n.tr("Localizable", "mobile.tab.apps", fallback: "Apps")
+      /// Keys
+      public static let keys = L10n.tr("Localizable", "mobile.tab.keys", fallback: "Keys")
+      /// iPhone and iPad
+      public static let remote = L10n.tr("Localizable", "mobile.tab.remote", fallback: "Remote")
+      /// Settings
+      public static let settings = L10n.tr("Localizable", "mobile.tab.settings", fallback: "Settings")
+    }
+    public enum Touchpad {
+      /// Swipe to move · Tap to select
+      public static let hint = L10n.tr("Localizable", "mobile.touchpad.hint", fallback: "Swipe to move · Tap to select")
+    }
+    public enum Welcome {
+      /// Make sure this device and your TV are on the same Wi-Fi.
+      public static let subtitle = L10n.tr("Localizable", "mobile.welcome.subtitle", fallback: "Make sure this device and your TV are on the same Wi-Fi.")
+      /// Find your TCL TV
+      public static let title = L10n.tr("Localizable", "mobile.welcome.title", fallback: "Find your TCL TV")
+    }
   }
   public enum Notification {
     public enum Disconnected {

@@ -21,6 +21,7 @@
 
 /* Shared */
 "common.cancel" = "Cancel";
+"common.done" = "Done";
 "common.name" = "Name";
 "common.add" = "Add";
 "common.addToFavorites" = "Add to Favorites";
@@ -166,3 +167,16 @@
 "notification.unavailable.title" = "TV unavailable";
 "notification.paired.title" = "Paired";
 "notification.paired.body" = "%@ is ready to control.";
+
+/* iPhone and iPad */
+"mobile.tab.remote" = "Remote";
+"mobile.tab.apps" = "Apps";
+"mobile.tab.keys" = "Keys";
+"mobile.tab.settings" = "Settings";
+"mobile.tvs" = "TVs";
+"mobile.findTVs" = "Find TVs";
+"mobile.mode.buttons" = "Buttons";
+"mobile.mode.touchpad" = "Touchpad";
+"mobile.touchpad.hint" = "Swipe to move · Tap to select";
+"mobile.welcome.title" = "Find your TCL TV";
+"mobile.welcome.subtitle" = "Make sure this device and your TV are on the same Wi-Fi.";

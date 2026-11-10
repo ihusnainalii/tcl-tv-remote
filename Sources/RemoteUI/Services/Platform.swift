@@ -1,8 +1,10 @@
+import Combine
 import SwiftUI
 #if os(macOS)
 import AppKit
 public typealias PlatformColor = NSColor
 #else
+import GameController
 import UIKit
 public typealias PlatformColor = UIColor
 #endif
@@ -57,12 +59,25 @@ enum Haptics {
 }
 
 enum PlatformInfo {
-    /// Keyboard shortcuts are worth listing on Mac and iPad (hardware keyboards), not on iPhone.
+    /// Keyboard shortcuts only matter with a hardware keyboard: always on Mac, and on iPhone or iPad
+    /// only while one is connected.
     @MainActor static var showsKeyboardShortcuts: Bool {
         #if os(macOS)
         true
         #else
-        UIDevice.current.userInterfaceIdiom == .pad
+        GCKeyboard.coalesced != nil
+        #endif
+    }
+
+    /// Fires when a hardware keyboard connects or disconnects (never on macOS).
+    static var keyboardChanges: AnyPublisher<Void, Never> {
+        #if os(macOS)
+        Empty().eraseToAnyPublisher()
+        #else
+        NotificationCenter.default.publisher(for: .GCKeyboardDidConnect)
+            .merge(with: NotificationCenter.default.publisher(for: .GCKeyboardDidDisconnect))
+            .map { _ in () }
+            .eraseToAnyPublisher()
         #endif
     }
 

@@ -53,9 +53,28 @@ Fire TV editions aren't supported yet (see the [Roadmap](#roadmap)). Tested on a
 
 ## iPhone and iPad
 
-The same remote runs on iPhone and iPad, sharing every screen, rule and protocol driver with the Mac app.
+A native iPhone and iPad app shares every rule, protocol driver and component with the Mac app, with a layout designed for touch.
 
-<p align="center"><img src="docs/screenshots/iphone.png" width="260" alt="TCL Remote on iPhone"></p>
+<p align="center">
+<img src="docs/screenshots/iphone-remote.png" width="200" alt="Remote tab on iPhone">
+<img src="docs/screenshots/iphone-apps.png" width="200" alt="Apps tab on iPhone">
+<img src="docs/screenshots/iphone-keys.png" width="200" alt="Keys tab on iPhone">
+<img src="docs/screenshots/iphone-settings.png" width="200" alt="Settings tab on iPhone">
+</p>
+
+<p align="center">
+<img src="docs/screenshots/ipad-remote.png" width="400" alt="Two-column remote on iPad">
+<img src="docs/screenshots/ipad-welcome.png" width="400" alt="Finding a TV on iPad">
+</p>
+
+- **Tab bar** with Remote, Apps, Keys and Settings. iPhone shows it at the bottom; iPadOS shows it at the top.
+- **Remote tab:** a large arrow pad, or a **touchpad**: swipe to move (each swipe step is one arrow press, with haptics) and tap to select. Big buttons for back, home, search, settings, play/pause and media, plus volume and channel rockers and the live volume bar.
+- **TV switcher** in the navigation bar: switch between saved TVs or find new ones. Pairing opens as a sheet.
+- **iPad:** a two-column remote, with controls on the left and your apps on the right.
+- **Keys tab:** a live keyboard for the TV's text boxes, a number pad, and extra keys (guide, captions, stop, power on/off).
+- With a hardware keyboard attached, the same shortcuts as on the Mac work, and Settings lists them.
+
+### Build and run
 
 ```bash
 brew install xcodegen
@@ -63,11 +82,11 @@ cd iOS && xcodegen        # generates TCLRemoteiOS.xcodeproj from project.yml
 open TCLRemoteiOS.xcodeproj
 ```
 
-Run the `TCLRemoteiOS` scheme on a simulator. To run on a device, set your team in Xcode (or `DEVELOPMENT_TEAM` in `iOS/project.yml`).
+Run the `TCLRemoteiOS` scheme on a simulator. To run on a device, set your team in Xcode. A free Personal Team works, but its builds expire after 7 days.
 
 **Differences from the Mac app:**
 - No launch at login, quit or update check. iOS apps update through the App Store.
-- The pairing certificate is created natively and kept in the iOS Keychain.
+- The pairing certificate is created natively (a self-signed X.509 certificate built in Swift) and kept in the iOS Keychain.
 - Discovering Roku TVs on a real iPhone needs Apple's multicast networking entitlement. Until that's granted, use **Add by IP** for Roku. Google TV discovery works without it.
 
 ## Features
@@ -101,6 +120,8 @@ Run the `TCLRemoteiOS` scheme on a simulator. To run on a device, set your team 
 
 ## Screenshots
 
+**Mac menu bar**
+
 | Remote and apps | More controls | Light mode, Ocean theme |
 |---|---|---|
 | <img src="docs/screenshots/remote.png" width="250" alt="Remote with app launcher"> | <img src="docs/screenshots/remote-more.png" width="250" alt="More controls tab"> | <img src="docs/screenshots/light-ocean.png" width="250" alt="Light mode with keypad"> |
@@ -109,7 +130,9 @@ Run the `TCLRemoteiOS` scheme on a simulator. To run on a device, set your team 
 |---|---|
 | <img src="docs/screenshots/settings.png" width="250" alt="General settings"> | <img src="docs/screenshots/themes.png" width="250" alt="Color themes"> |
 
-Regenerate the screenshots with `scripts/screenshots.sh` (needs a built app and a reachable TV).
+**iPhone and iPad:** see [iPhone and iPad](#iphone-and-ipad).
+
+Regenerate the Mac screenshots with `scripts/screenshots.sh` (needs a built app and a reachable TV). The iOS screenshots come from the Simulator (`xcrun simctl io <device> screenshot`).
 
 ## Install
 
@@ -208,7 +231,9 @@ Sources/
   RemoteUI/                    shared SwiftUI UI for macOS, iOS and iPadOS
     State/AppStore             presentation state; coordinates TVKit and system services
     Services/                  connectivity monitor, notifications, login item, preferences, platform shims
-    Presentation/              SwiftUI screens and components
+    Presentation/Components    shared parts: arrow pad, rockers, keys, keypad, typing, volume bar, themes
+    Presentation/Screens       Mac panel screens (remote, TVs, pairing, settings, apps)
+    Presentation/Mobile        iPhone/iPad layout: tab bar, touchpad, two-column iPad remote
     Resources/ + Generated/    Localizable.strings and SwiftGen's L10n
   TCLRemote/App/               Mac menu bar shell: status item + popover
 iOS/                           iPhone/iPad shell (XcodeGen project.yml + App/)

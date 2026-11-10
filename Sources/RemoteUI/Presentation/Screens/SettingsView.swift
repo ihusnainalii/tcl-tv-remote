@@ -102,6 +102,7 @@ private struct InfoRow: View {
 
 private struct GeneralSettings: View {
     @EnvironmentObject var s: Store
+    @State private var hasKeyboard = PlatformInfo.showsKeyboardShortcuts
     @AppStorage("autoConnect") private var autoConnect = true
     @AppStorage("notify") private var notify = true
     @AppStorage("retrySeconds") private var retry = 10.0
@@ -129,7 +130,7 @@ private struct GeneralSettings: View {
                 Divider()
                 ToggleRow(title: L10n.Settings.notifications, isOn: $notify)
             }
-            if PlatformInfo.showsKeyboardShortcuts {
+            if hasKeyboard {
                 Card(title: L10n.Settings.keyboard) {
                     InfoRow(title: L10n.Settings.Keyboard.navigate, value: "← ↑ → ↓")
                     Divider()
@@ -141,7 +142,12 @@ private struct GeneralSettings: View {
                     Divider()
                     InfoRow(title: L10n.Settings.Keyboard.volume, value: "+ / −")
                 }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
+        }
+        .animation(.smooth, value: hasKeyboard)
+        .onReceive(PlatformInfo.keyboardChanges) {
+            hasKeyboard = PlatformInfo.showsKeyboardShortcuts
         }
     }
 }

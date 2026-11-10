@@ -5,6 +5,9 @@ All notable changes to this project are listed here. The format follows [Keep a 
 ## [Unreleased]
 
 ### Added
+- Native iPhone and iPad design: tab bar (Remote, Apps, Keys, Settings), touchpad mode with haptics, TV switcher, pairing sheet, two-column iPad remote. The Mac menu bar panel is unchanged.
+- Fixed: the Pair button was disabled while a TV needed pairing (Mac and iOS).
+- Keyboard shortcuts in Settings only show when a hardware keyboard is connected (iOS).
 - iPhone and iPad app sharing all screens and logic with the Mac app (new `RemoteUI` module; `iOS/` XcodeGen project). Native X.509 certificate generation for pairing on iOS. CI builds the iOS app.
 - Fixed the power button's glow being clipped at the panel edge.
 - SwiftLint (strict) and SwiftGen. All UI text moved to `Localizable.strings` with a generated `L10n` API, ready for translations. CI gains a Lint stage.
