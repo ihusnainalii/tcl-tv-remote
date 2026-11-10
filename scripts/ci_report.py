@@ -20,6 +20,12 @@ def summary(md):
         print(md)
 
 
+def status_badge(label, ok):
+    """A small shields.io badge instead of emoji, so summaries render the same everywhere."""
+    text = label.replace("-", "--").replace(" ", "_").replace("%", "%25")
+    return f"![{'pass' if ok else 'fail'}](https://img.shields.io/badge/{text}-{'passing' if ok else 'failing'}-{'brightgreen' if ok else 'red'})"
+
+
 def esc(s):  # GitHub workflow-command escaping
     return s.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
@@ -43,8 +49,7 @@ def tests(paths):
     if total == 0:
         print("::error title=No test results::No test cases found in the xUnit report")
         return 1
-    icon = "❌" if failed else "✅"
-    summary(f"## {icon} Tests\n\n| Passed | Failed | Skipped | Total |\n|---|---|---|---|\n"
+    summary(f"## Tests {status_badge('tests', not failed)}\n\n| Passed | Failed | Skipped | Total |\n|---|---|---|---|\n"
             f"| {total - failed - skipped} | {failed} | {skipped} | {total} |\n")
     if failures:
         summary("| Failed test | Message |\n|---|---|\n" +
@@ -65,7 +70,7 @@ def coverage(path, minimum):
         rows.append((lines["percent"], name.split("/Sources/")[1]))
     pct = 100.0 * covered / count if count else 0.0
     ok = pct >= minimum
-    summary(f"## {'✅' if ok else '❌'} TVKit coverage: {pct:.1f}% (minimum {minimum:g}%)\n\n"
+    summary(f"## TVKit coverage {status_badge(f'{pct:.1f}%', ok)} (minimum {minimum:g}%)\n\n"
             "<details><summary>Per file</summary>\n\n| Lines | File |\n|---|---|\n" +
             "\n".join(f"| {p:.1f}% | `{n}` |" for p, n in sorted(rows)) + "\n\n</details>\n")
     if not ok:

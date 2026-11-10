@@ -1,4 +1,6 @@
-# TCL Remote for Mac
+<p align="center"><img src="docs/icon.png" width="128" alt="TCL Remote icon"></p>
+
+<h1 align="center">TCL Remote for Mac</h1>
 
 A native macOS menu bar remote for TCL TVs. It finds your TV on the local network, pairs once, remembers it, and reconnects on its own, so your keyboard and trackpad become the remote.
 
