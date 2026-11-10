@@ -66,7 +66,10 @@ final class AndroidTVTests: XCTestCase {
     }
 
     func testFinishWithoutStartFails() async {
-        do { try await remote().finishPairing(code: "ABCDEF"); XCTFail() } catch TVError.closed {} catch { XCTFail("\(error)") }
+        do {
+            try await remote().finishPairing(code: "ABCDEF")
+            XCTFail("finishing without starting should fail")
+        } catch TVError.closed {} catch { XCTFail("unexpected \(error)") }
     }
 
     func testConnectHandshakeKeysTextAppsAndState() async throws {

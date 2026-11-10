@@ -23,7 +23,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var appearanceObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        appearanceObserver = NotificationCenter.default.addObserver(forName: AppearanceMode.changed, object: nil, queue: .main) { [weak self] _ in
+        appearanceObserver = NotificationCenter.default.addObserver(
+            forName: AppearanceMode.changed, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.popover.appearance = AppearanceMode.current.nsAppearance }
         }
         AppearanceMode.apply()
@@ -37,8 +38,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.action = #selector(toggle)
         statusItem.button?.target = self
-
-
 
         linkObserver = store.$link.sink { [weak self] link in
             let name = link == .connected ? "appletvremote.gen4.fill" : "appletvremote.gen4"

@@ -71,10 +71,15 @@ final class TLSConn {
     private func chunk() async throws -> Data {
         try await withCheckedThrowingContinuation { c in
             conn.receive(minimumIncompleteLength: 1, maximumLength: 65536) { data, _, isDone, err in
-                if let err { c.resume(throwing: err) }
-                else if let data, !data.isEmpty { c.resume(returning: data) }
-                else if isDone { c.resume(throwing: TVError.closed) }
-                else { c.resume(returning: Data()) }
+                if let err {
+                    c.resume(throwing: err)
+                } else if let data, !data.isEmpty {
+                    c.resume(returning: data)
+                } else if isDone {
+                    c.resume(throwing: TVError.closed)
+                } else {
+                    c.resume(returning: Data())
+                }
             }
         }
     }

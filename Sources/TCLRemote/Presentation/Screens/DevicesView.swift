@@ -34,7 +34,8 @@ struct DevicesView: View {
                     if !s.newTVs.isEmpty {
                         section("On this network")
                         ForEach(s.newTVs) { tv in
-                            DeviceRow(tv: tv, subtitle: Text("\(tv.kind.rawValue) · \(tv.host)"), online: true, current: false) { s.select(tv) }
+                            DeviceRow(tv: tv, subtitle: Text("\(tv.kind.rawValue) · \(tv.host)"),
+                                      online: true, current: false) { s.select(tv) }
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
                     }
@@ -96,7 +97,7 @@ struct DevicesView: View {
 
 struct DeviceRow: View {
     let tv: TV
-    var title: String? = nil
+    var title: String?
     var favorite = false
     let subtitle: Text
     let online: Bool

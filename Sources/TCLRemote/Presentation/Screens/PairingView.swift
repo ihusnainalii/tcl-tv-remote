@@ -31,7 +31,8 @@ struct PairingView: View {
                             RoundedRectangle(cornerRadius: 9)
                                 .fill(Theme.fill)
                                 .overlay(RoundedRectangle(cornerRadius: 9)
-                                    .stroke(active ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Theme.stroke), lineWidth: active ? 2 : 0.5))
+                                    .stroke(active ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Theme.stroke),
+                                            lineWidth: active ? 2 : 0.5))
                             if i < chars.count {
                                 Text(String(chars[i])).font(.system(size: 20, weight: .semibold, design: .monospaced))
                                     .transition(.scale(scale: 0.4).combined(with: .opacity))

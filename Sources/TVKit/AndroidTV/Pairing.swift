@@ -64,9 +64,11 @@ public enum ClientIdentity {
         var items: CFArray?
         let status = SecPKCS12Import(data as CFData, opts as CFDictionary, &items)
         guard status == errSecSuccess, let first = (items as? [[String: Any]])?.first,
-              let id = first[kSecImportItemIdentity as String] else { throw TVError.identity("import \(status)") }
-        cached = (id as! SecIdentity)
-        return cached!
+              let value = first[kSecImportItemIdentity as String] else { throw TVError.identity("import \(status)") }
+        // SecIdentity is a CF type, so a conditional cast can't be written; this always succeeds.
+        let id = value as! SecIdentity // swiftlint:disable:this force_cast
+        cached = id
+        return id
     }
 
     // ponytail: shells out to the system LibreSSL instead of hand-writing X.509 DER.
@@ -75,7 +77,8 @@ public enum ClientIdentity {
                                                 attributes: [.posixPermissions: 0o700])
         let key = tmp.appendingPathComponent("key.pem").path, cert = tmp.appendingPathComponent("cert.pem").path
         let p12 = tmp.appendingPathComponent("client.p12")
-        try openssl(["req", "-x509", "-newkey", "rsa:2048", "-keyout", key, "-out", cert, "-days", "3650", "-nodes", "-subj", "/CN=atvremote"])
+        try openssl(["req", "-x509", "-newkey", "rsa:2048", "-keyout", key, "-out", cert,
+                     "-days", "3650", "-nodes", "-subj", "/CN=atvremote"])
         try openssl(["pkcs12", "-export", "-inkey", key, "-in", cert, "-out", p12.path, "-passout", "pass:\(pass)",
                      "-certpbe", "PBE-SHA1-3DES", "-keypbe", "PBE-SHA1-3DES"])
         return try Data(contentsOf: p12)

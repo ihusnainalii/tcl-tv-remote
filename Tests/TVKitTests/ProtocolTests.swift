@@ -7,7 +7,7 @@ final class ProtocolTests: XCTestCase {
         let f = pbDecode(data)
         XCTAssertEqual(f.int(1), 300)
         XCTAssertEqual(f.msg(10)?.int(1), 26)
-        guard case let .bytes(s)? = f.msg(10)?[2]?.first else { return XCTFail() }
+        guard case let .bytes(s)? = f.msg(10)?[2]?.first else { return XCTFail("nested string field missing") }
         XCTAssertEqual(String(data: s, encoding: .utf8), "hi")
     }
 

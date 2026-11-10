@@ -1,0 +1,54 @@
+# SwiftLint config. CI runs `swiftlint lint --strict`, so every warning fails the Lint stage.
+included:
+  - Sources
+  - Tests
+  - Package.swift
+excluded:
+  - .build
+  - Sources/TCLRemote/Generated   # SwiftGen output
+
+opt_in_rules:
+  - empty_count
+  - first_where
+  - contains_over_first_not_nil
+  - redundant_nil_coalescing
+  - sorted_first_last
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+  - vertical_whitespace_closing_braces
+  - closure_spacing
+  - modifier_order
+
+disabled_rules:
+  - trailing_comma          # we prefer trailing commas in multi-line literals
+  - todo
+  - switch_case_alignment   # `return switch` expressions indent their cases, statements don't
+
+identifier_name:
+  min_length: 1             # short names like `s`, `id`, `ok` read fine in small scopes
+  max_length: 50
+
+type_name:
+  min_length: 2
+
+line_length:
+  warning: 140
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+
+large_tuple:
+  warning: 3
+
+nesting:
+  type_level: 2
+
+function_body_length:
+  warning: 80
+
+type_body_length:
+  warning: 400
+
+file_length:
+  warning: 600

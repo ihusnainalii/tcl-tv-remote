@@ -1,5 +1,3 @@
-
-
 import Darwin
 import Foundation
 import Network
@@ -71,6 +69,10 @@ public final class Discovery {
         c.start(queue: .main)
     }
 
+    // Constant pattern: failing to compile it is a programmer error.
+    // swiftlint:disable:next force_try
+    nonisolated private static let locationPattern = try! Regex(#"(?i)location:\s*https?://([^:/\s]+)"#)
+
     /// SSDP M-SEARCH over plain BSD sockets; returns hosts from LOCATION headers.
     nonisolated static func ssdp(searchTarget: String, host: String, port: UInt16, seconds: Int) -> [String] {
         let fd = socket(AF_INET, SOCK_DGRAM, 0)
@@ -100,7 +102,7 @@ public final class Discovery {
         while Date() < deadline {
             let n = recv(fd, &buf, buf.count, 0)
             guard n > 0, let text = String(bytes: buf[0..<n], encoding: .utf8) else { continue }
-            if let m = text.firstMatch(of: try! Regex(#"(?i)location:\s*https?://([^:/\s]+)"#)), let h = m[1].substring {
+            if let m = text.firstMatch(of: locationPattern), let h = m[1].substring {
                 hosts.insert(String(h))
             }
         }
