@@ -23,6 +23,23 @@ open "build/TCL Remote.app"   # or scripts/make-dmg.sh for an installer
 ```
 Requires macOS 15+ and Xcode. Allow **Local Network** access when macOS asks.
 
+## Architecture
+```
+Sources/
+  TVKit/                     core library: no UI, unit-tested
+    Domain/                  TV, KnownTV, TVApp, Key, TVError, TVRemote protocol, SavedTVs
+    AndroidTV/               Remote v2: protobuf, TLS connection, pairing crypto, remote
+    Roku/                    ECP remote
+    Discovery/               Bonjour + SSDP
+    Updates/                 GitHub release check
+  TCLRemote/                 menu bar app
+    App/                     @main scene
+    State/                   AppStore: connection lifecycle, saved TVs, notifications
+    Presentation/            SwiftUI screens and components
+Tests/TVKitTests/
+```
+The app depends on `TVKit` through its public API only; adding a TV platform means one new `TVRemote` implementation in TVKit.
+
 ## Distribution
 - `scripts/build.sh` builds a universal (Apple Silicon + Intel) app. Set `VERSION=1.2.0` to stamp the version and `SIGN_IDENTITY="Developer ID Application: …"` to sign with hardened runtime (ad-hoc otherwise).
 - `scripts/make-dmg.sh` packages `build/TCLRemote-<version>.dmg`. Set `NOTARY_PROFILE` (from `xcrun notarytool store-credentials`) to notarize and staple.

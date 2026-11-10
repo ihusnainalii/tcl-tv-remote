@@ -1,5 +1,5 @@
 import XCTest
-@testable import TCLRemote
+@testable import TVKit
 
 final class ProtocolTests: XCTestCase {
     func testProtobufRoundTrip() {

@@ -1,0 +1,109 @@
+import SwiftUI
+import TVKit
+
+// MARK: - Root
+
+struct RootView: View {
+    @EnvironmentObject var s: Store
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func slide(_ edge: Edge) -> AnyTransition { reduceMotion ? .opacity : .push(from: edge) }
+
+    var body: some View {
+        VStack(spacing: 14) {
+            Header()
+            ZStack {
+                switch s.screen {
+                case .devices: DevicesView().transition(slide(.leading))
+                case .pairing: PairingView().transition(slide(.trailing))
+                case .remote: RemoteView().transition(slide(.trailing))
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .clipped()
+        }
+        .padding(16)
+        // MenuBarExtra windows don't resize while open, so the panel keeps one size and scrolls inside.
+        .frame(width: 300, height: 700)
+        .overlay(alignment: .bottom) {
+            if let t = s.toast {
+                Text(t)
+                    .font(.callout.weight(.medium))
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(.regularMaterial, in: Capsule())
+                    .shadow(color: .black.opacity(0.2), radius: 10, y: 4)
+                    .padding(.bottom, 12)
+                    .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.9)))
+            }
+        }
+    }
+}
+
+struct Header: View {
+    @EnvironmentObject var s: Store
+    @Environment(\.openSettings) private var openSettings
+
+    var status: (String, Color) {
+        switch s.link {
+        case .idle: ("Not connected", .secondary)
+        case .connecting: ("Connecting…", .orange)
+        case .connected: (s.tvOn == false ? "Standby" : "Connected", .green)
+        case .needsPairing: ("Pairing required", .yellow)
+        case .failed: ("Offline", .red)
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 9).fill(Theme.accent).frame(width: 32, height: 32)
+                Image(systemName: "tv").font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(s.displayName).font(.headline).lineLimit(1).contentTransition(.opacity)
+                HStack(spacing: 5) {
+                    StatusDot(color: status.1, pulsing: s.link == .connecting || s.link == .connected)
+                    Text(status.0).font(.caption).foregroundStyle(.secondary).contentTransition(.opacity)
+                }
+            }
+            Spacer()
+            if s.screen == .remote {
+                Button { s.showDevices() } label: { icon("list.bullet") }.buttonStyle(PressStyle()).help("TVs")
+            } else if s.screen == .devices, s.tv != nil {
+                Button { s.select(s.tv!) } label: { icon("appletvremote.gen4") }.buttonStyle(PressStyle()).help("Remote")
+            }
+            Menu {
+                Toggle("Launch at Login", isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
+                Button("Find TVs…") { s.showDevices() }
+                Button("Settings…") { NSApp.activate(); openSettings() }.keyboardShortcut(",")
+                Divider()
+                Button("Quit TCL Remote") { NSApp.terminate(nil) }.keyboardShortcut("q")
+            } label: { icon("ellipsis") }
+            .menuStyle(.button).buttonStyle(PressStyle()).menuIndicator(.hidden).fixedSize()
+            .accessibilityLabel("More options")
+        }
+        .animation(.smooth, value: s.link)
+    }
+
+    func icon(_ name: String) -> some View {
+        Image(systemName: name).accessibilityHidden(true).font(.system(size: 12, weight: .semibold))
+            .frame(width: 28, height: 28).pill(Circle())
+    }
+}
+
+struct StatusDot: View {
+    let color: Color
+    let pulsing: Bool
+    @State private var on = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Circle().fill(color).frame(width: 7, height: 7)
+            .background(
+                Circle().stroke(color, lineWidth: 1.5)
+                    .scaleEffect(on ? 2.6 : 1).opacity(on ? 0 : 0.7)
+                    .opacity(pulsing && !reduceMotion ? 1 : 0)
+            )
+            .onAppear { withAnimation(.easeOut(duration: 1.4).repeatForever(autoreverses: false)) { on = true } }
+    }
+}

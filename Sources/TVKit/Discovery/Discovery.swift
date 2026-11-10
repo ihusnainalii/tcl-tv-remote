@@ -1,14 +1,18 @@
+
+
 import Darwin
 import Foundation
 import Network
 
 /// Finds Google/Android TVs via Bonjour and Roku TVs via SSDP.
 @MainActor
-final class Discovery {
+public final class Discovery {
     private var browser: NWBrowser?
     private var resolving: [NWConnection] = []
 
-    func scan(found: @escaping @MainActor (TV) -> Void) async {
+    public init() {}
+
+    public func scan(found: @escaping @MainActor (TV) -> Void) async {
         let b = NWBrowser(for: .bonjour(type: "_androidtvremote2._tcp", domain: nil), using: .tcp)
         b.browseResultsChangedHandler = { [weak self] results, _ in
             Task { @MainActor in results.forEach { self?.resolve($0, found: found) } }

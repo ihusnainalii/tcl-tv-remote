@@ -5,8 +5,11 @@ let package = Package(
     name: "TCLRemote",
     platforms: [.macOS(.v15)],
     targets: [
-        .executableTarget(name: "TCLRemote"),
-        .testTarget(name: "TCLRemoteTests", dependencies: ["TCLRemote"]),
+        // Core: TV protocols, discovery, models, persistence. No UI.
+        .target(name: "TVKit"),
+        // Menu bar app: SwiftUI presentation + app state.
+        .executableTarget(name: "TCLRemote", dependencies: ["TVKit"]),
+        .testTarget(name: "TVKitTests", dependencies: ["TVKit"]),
     ],
     swiftLanguageModes: [.v5]
 )

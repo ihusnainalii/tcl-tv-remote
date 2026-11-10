@@ -1,22 +1,9 @@
 import AppKit
 import Network
 import ServiceManagement
-import UserNotifications
 import SwiftUI
-
-/// A TV we've connected to before.
-struct KnownTV: Codable, Hashable, Identifiable {
-    var tv: TV
-    var lastUsed: Date
-    // Optional so data saved by older versions still decodes.
-    var favorite: Bool?
-    var nickname: String?
-    var favoriteApps: [String]?
-    var recentApps: [String]?
-    var customApps: [TVApp]?
-    var id: String { tv.id }
-    var name: String { nickname?.isEmpty == false ? nickname! : tv.name }
-}
+import TVKit
+import UserNotifications
 
 @MainActor
 final class Store: ObservableObject {
@@ -41,7 +28,6 @@ final class Store: ObservableObject {
     private var remote: TVRemote?
     private let discovery = Discovery()
     private let pathMonitor = NWPathMonitor()
-    private let knownKey = "knownTVs"
     private var failures = 0
     private var retryTask: Task<Void, Never>?
 
@@ -50,8 +36,7 @@ final class Store: ObservableObject {
     func isOnline(_ tv: TV) -> Bool { found.contains { $0.id == tv.id } }
 
     init() {
-        if let d = UserDefaults.standard.data(forKey: knownKey),
-           let list = try? JSONDecoder().decode([KnownTV].self, from: d) { known = list }
+        known = SavedTVs.load()
 
         // Auto-connect to the favorite TV, else the last one that worked.
         let auto = UserDefaults.standard.object(forKey: "autoConnect") as? Bool ?? true
@@ -257,7 +242,7 @@ final class Store: ObservableObject {
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: c, trigger: nil))
     }
 
-    private func save() { UserDefaults.standard.set(try? JSONEncoder().encode(known), forKey: knownKey) }
+    private func save() { SavedTVs.save(known) }
 
     // MARK: pairing (Google TV)
 
