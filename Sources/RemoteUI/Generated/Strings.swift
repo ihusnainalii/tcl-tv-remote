@@ -304,6 +304,8 @@ public enum L10n {
     /// VOL
     public static let volumeShort = L10n.tr("Localizable", "remote.volumeShort", fallback: "VOL")
     public enum OfflineCard {
+      /// Stopped trying after 5 attempts. Tap Retry when the TV is on.
+      public static let stopped = L10n.tr("Localizable", "remote.offlineCard.stopped", fallback: "Stopped trying after 5 attempts. Tap Retry when the TV is on.")
       /// Retrying automatically…
       public static let subtitle = L10n.tr("Localizable", "remote.offlineCard.subtitle", fallback: "Retrying automatically…")
       /// TV is unreachable

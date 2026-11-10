@@ -7,6 +7,7 @@ All notable changes to this project are listed here. The format follows [Keep a 
 ### Added
 - Apple Watch companion app (arrow pad, Digital Crown volume, controls, apps) relaying through the iPhone; direct Roku control from the watch.
 - iPhone and iPad Home Screen widget (small and medium) with one-tap remote buttons.
+- Stops automatic retries and scans after 5 failed attempts in a row; the banner says so and Retry still works. A network change or wake allows one more attempt.
 - Clear, actionable error messages everywhere, with the reason shown in the offline banner; details logged for debugging.
 - First-launch walkthrough on iPhone and iPad; launch screen and a new TV app icon (Mac and iOS). iPad shows only Remote and Settings tabs. Mobile remote uses one consistent gap between rows.
 - Native iPhone and iPad design: tab bar (Remote, Apps, Keys, Settings), touchpad mode with haptics, TV switcher, pairing sheet, two-column iPad remote. The Mac menu bar panel is unchanged.

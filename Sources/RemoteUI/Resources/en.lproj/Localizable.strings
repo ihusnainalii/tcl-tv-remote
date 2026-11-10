@@ -69,6 +69,7 @@
 "remote.pairCard.subtitle" = "One-time setup. A code will appear on the TV.";
 "remote.offlineCard.title" = "TV is unreachable";
 "remote.offlineCard.subtitle" = "Retrying automatically…";
+"remote.offlineCard.stopped" = "Stopped trying after 5 attempts. Tap Retry when the TV is on.";
 "remote.retry" = "Retry";
 "remote.repair" = "Re-pair";
 "remote.typing.placeholder" = "Type on TV…";

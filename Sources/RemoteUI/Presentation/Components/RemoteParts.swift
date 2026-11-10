@@ -77,7 +77,8 @@ struct ConnectionBanner: View {
                  action: L10n.Pairing.pair) { s.beginPairing() }
         case .failed:
             card(icon: "wifi.exclamationmark", title: L10n.Remote.OfflineCard.title,
-                 subtitle: s.lastError.map { "\($0) \(L10n.Remote.OfflineCard.subtitle)" } ?? L10n.Remote.OfflineCard.subtitle,
+                 subtitle: [s.lastError, s.autoRetryStopped ? L10n.Remote.OfflineCard.stopped : L10n.Remote.OfflineCard.subtitle]
+                    .compactMap { $0 }.joined(separator: " "),
                  action: L10n.Remote.retry,
                  secondary: s.tv?.kind == .androidTV ? (L10n.Remote.repair, { s.beginPairing() }) : nil) { s.connect() }
         default: EmptyView()

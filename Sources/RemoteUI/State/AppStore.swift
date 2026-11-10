@@ -18,6 +18,9 @@ public final class Store: ObservableObject {
     @Published private(set) var toast: String?
     /// Why the last connection attempt failed, in plain words (shown in the offline banner).
     @Published private(set) var lastError: String?
+    /// True after `maxAutoAttempts` failures in a row: no more automatic retries or scans until the user taps Retry.
+    @Published private(set) var autoRetryStopped = false
+    static let maxAutoAttempts = 5
     @Published private(set) var pairError = false
     @Published private(set) var tvOn: Bool?
     @Published private(set) var volume: TVVolume?
@@ -43,6 +46,8 @@ public final class Store: ObservableObject {
 
         monitor = ConnectivityMonitor { [weak self] in
             guard let self, self.tv != nil, self.link != .connected, self.link != .connecting else { return }
+            // A network change or wake is a new situation: allow one more attempt even after giving up.
+            if self.autoRetryStopped { self.failures = Self.maxAutoAttempts - 1 }
             self.connect()
         }
     }
@@ -134,6 +139,7 @@ public final class Store: ObservableObject {
                 try await remote.connect()
                 withAnimation(.smooth) { link = .connected }
                 lastError = nil
+                autoRetryStopped = false
                 if failures > 0 {
                     show(L10n.Toast.reconnected)
                     SystemNotifications.post(L10n.Notification.Reconnected.title, L10n.Notification.Reconnected.body(displayName))
@@ -162,6 +168,10 @@ public final class Store: ObservableObject {
     /// ponytail: fixed-interval retry (Settings) while offline; add backoff if battery use shows up.
     private func scheduleRetry() {
         retryTask?.cancel()
+        guard failures < Self.maxAutoAttempts else {
+            withAnimation(.smooth) { autoRetryStopped = true } // stop checking and scanning; Retry still works
+            return
+        }
         let id = tv?.id
         retryTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(Preferences.retrySeconds))
