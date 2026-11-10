@@ -18,21 +18,24 @@ struct DevicesView: View {
             FitScroll(maxHeight: 380) {
                 VStack(alignment: .leading, spacing: 6) {
                     if !s.known.isEmpty {
-                        section("Recent")
+                        section(L10n.Devices.recent)
                         ForEach(s.sortedKnown) { k in
                             DeviceRow(tv: k.tv, title: k.name, favorite: k.favorite == true,
-                                      subtitle: Text("Last used ") + Text(k.lastUsed, format: .relative(presentation: .named)),
+                                      subtitle: Text(L10n.Devices.lastUsed) + Text(" ")
+                                          + Text(k.lastUsed, format: .relative(presentation: .named)),
                                       online: s.isOnline(k.tv), current: s.tv?.id == k.id) { s.select(k.tv) }
                                 .contextMenu {
-                                    Button(k.favorite == true ? "Remove from Favorites" : "Add to Favorites") { s.toggleFavorite(k) }
-                                    Button("Rename…") { newName = k.name; renaming = k }
+                                    Button(k.favorite == true ? L10n.Common.removeFromFavorites : L10n.Common.addToFavorites) {
+                                        s.toggleFavorite(k)
+                                    }
+                                    Button(L10n.Devices.rename) { newName = k.name; renaming = k }
                                     Divider()
-                                    Button("Forget", role: .destructive) { s.forget(k) }
+                                    Button(L10n.Devices.forget, role: .destructive) { s.forget(k) }
                                 }
                         }
                     }
                     if !s.newTVs.isEmpty {
-                        section("On this network")
+                        section(L10n.Devices.onThisNetwork)
                         ForEach(s.newTVs) { tv in
                             DeviceRow(tv: tv, subtitle: Text("\(tv.kind.rawValue) · \(tv.host)"),
                                       online: true, current: false) { s.select(tv) }
@@ -42,8 +45,8 @@ struct DevicesView: View {
                     if s.known.isEmpty && s.newTVs.isEmpty && !s.scanning {
                         VStack(spacing: 6) {
                             Image(systemName: "tv.slash").font(.title).foregroundStyle(.secondary)
-                            Text("No TVs found").font(.callout.weight(.medium))
-                            Text("Make sure your Mac and TV are on the same Wi-Fi.").font(.caption).foregroundStyle(.secondary)
+                            Text(L10n.Devices.noTVs).font(.callout.weight(.medium))
+                            Text(L10n.Devices.sameWifi).font(.caption).foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity).padding(.vertical, 20)
@@ -53,15 +56,15 @@ struct DevicesView: View {
 
             if showManual {
                 VStack(spacing: 8) {
-                    TextField("TV IP address, e.g. 192.168.1.20", text: $manualIP)
+                    TextField(L10n.Devices.ipPlaceholder, text: $manualIP)
                         .textFieldStyle(.plain).padding(8).pill(RoundedRectangle(cornerRadius: 8))
                     Picker("", selection: $manualKind) {
                         ForEach(TV.Kind.allCases, id: \.self) { Text($0.rawValue) }
                     }.pickerStyle(.segmented).labelsHidden()
-                    Button("Connect") {
+                    Button(L10n.Devices.connect) {
                         let ip = manualIP.trimmingCharacters(in: .whitespaces)
                         guard !ip.isEmpty else { return }
-                        s.select(TV(name: "TCL TV (\(ip))", host: ip, kind: manualKind))
+                        s.select(TV(name: L10n.Devices.manualName(ip), host: ip, kind: manualKind))
                     }
                     .buttonStyle(.borderedProminent).frame(maxWidth: .infinity)
                 }
@@ -70,22 +73,22 @@ struct DevicesView: View {
 
             HStack {
                 Button { withAnimation(.spring) { showManual.toggle() } } label: {
-                    Label(showManual ? "Hide" : "Add by IP", systemImage: showManual ? "chevron.up" : "plus")
+                    Label(showManual ? L10n.Devices.hide : L10n.Devices.addByIP, systemImage: showManual ? "chevron.up" : "plus")
                         .font(.caption.weight(.medium)).padding(.horizontal, 10).padding(.vertical, 6).pill(Capsule())
                 }.buttonStyle(PressStyle())
                 Spacer()
                 Button { s.scan() } label: {
-                    Label(s.scanning ? "Scanning…" : "Scan", systemImage: "dot.radiowaves.left.and.right")
+                    Label(s.scanning ? L10n.Devices.scanning : L10n.Devices.scan, systemImage: "dot.radiowaves.left.and.right")
                         .symbolEffect(.variableColor.iterative, isActive: s.scanning)
                         .font(.caption.weight(.semibold)).foregroundStyle(.white)
                         .padding(.horizontal, 12).padding(.vertical, 6).background(Theme.accent, in: Capsule())
                 }.buttonStyle(PressStyle()).disabled(s.scanning)
             }
         }
-        .alert("Rename TV", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
-            TextField("Name", text: $newName)
-            Button("Save") { if let k = renaming { s.rename(k, newName) } }
-            Button("Cancel", role: .cancel) {}
+        .alert(L10n.Devices.renameTitle, isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+            TextField(L10n.Common.name, text: $newName)
+            Button(L10n.Devices.save) { if let k = renaming { s.rename(k, newName) } }
+            Button(L10n.Common.cancel, role: .cancel) {}
         }
     }
 
@@ -116,7 +119,7 @@ struct DeviceRow: View {
                         Text(title ?? tv.name).font(.callout.weight(.medium)).lineLimit(1)
                         if favorite {
                             Image(systemName: "star.fill").font(.system(size: 9)).foregroundStyle(.yellow)
-                                .transition(.scale.combined(with: .opacity)).accessibilityLabel("Favorite")
+                                .transition(.scale.combined(with: .opacity)).accessibilityLabel(L10n.Common.favorite)
                         }
                     }
                     subtitle.font(.caption).foregroundStyle(.secondary).lineLimit(1)
@@ -148,6 +151,6 @@ struct Radar: View {
                     .shadow(color: Theme.glow.opacity(0.6), radius: 8)
             }
         }
-        .accessibilityLabel("Scanning for TVs")
+        .accessibilityLabel(L10n.Devices.scanningForTVs)
     }
 }

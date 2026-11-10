@@ -1,0 +1,11 @@
+# SwiftGen: type-safe access to resources. Run `swiftgen` after editing Localizable.strings.
+# CI fails if Sources/TCLRemote/Generated is out of date.
+input_dir: Sources/TCLRemote/Resources
+output_dir: Sources/TCLRemote/Generated
+strings:
+  inputs: en.lproj/Localizable.strings
+  outputs:
+    - templateName: structured-swift5
+      output: Strings.swift
+      params:
+        enumName: L10n

@@ -13,8 +13,9 @@ enum AccentStyle: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .violet: "Violet"; case .ocean: "Ocean"; case .sunset: "Sunset"; case .forest: "Forest"
-        case .rose: "Rose"; case .tclRed: "TCL Red"; case .graphite: "Graphite"; case .custom: "Custom"
+        case .violet: L10n.Theme.violet; case .ocean: L10n.Theme.ocean; case .sunset: L10n.Theme.sunset
+        case .forest: L10n.Theme.forest; case .rose: L10n.Theme.rose; case .tclRed: L10n.Theme.tclRed
+        case .graphite: L10n.Theme.graphite; case .custom: L10n.Theme.custom
         }
     }
 
@@ -51,7 +52,13 @@ enum AppearanceMode: String, CaseIterable, Identifiable {
     case system, light, dark
     static let key = "appearanceMode"
     var id: String { rawValue }
-    var title: String { rawValue.capitalized }
+    var title: String {
+        switch self {
+        case .system: L10n.Appearance.system
+        case .light: L10n.Appearance.light
+        case .dark: L10n.Appearance.dark
+        }
+    }
 
     static let changed = Notification.Name("TCLRemoteAppearanceChanged")
 

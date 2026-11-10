@@ -1,0 +1,168 @@
+/* App */
+"app.name" = "TCL Remote";
+
+/* Connection status (header) */
+"status.notConnected" = "Not connected";
+"status.connecting" = "Connecting…";
+"status.connected" = "Connected";
+"status.standby" = "Standby";
+"status.pairingRequired" = "Pairing required";
+"status.offline" = "Offline";
+
+/* Header and ⋯ menu */
+"header.closeSettings" = "Close Settings";
+"header.tvs" = "TVs";
+"header.remote" = "Remote";
+"header.moreOptions" = "More options";
+"menu.launchAtLogin" = "Launch at Login";
+"menu.findTVs" = "Find TVs…";
+"menu.settings" = "Settings…";
+"menu.quit" = "Quit TCL Remote";
+
+/* Shared */
+"common.cancel" = "Cancel";
+"common.name" = "Name";
+"common.add" = "Add";
+"common.addToFavorites" = "Add to Favorites";
+"common.removeFromFavorites" = "Remove from Favorites";
+"common.favorite" = "Favorite";
+
+/* Devices screen */
+"devices.recent" = "Recent";
+"devices.onThisNetwork" = "On this network";
+"devices.lastUsed" = "Last used";
+"devices.rename" = "Rename…";
+"devices.renameTitle" = "Rename TV";
+"devices.save" = "Save";
+"devices.forget" = "Forget";
+"devices.noTVs" = "No TVs found";
+"devices.sameWifi" = "Make sure your Mac and TV are on the same Wi-Fi.";
+"devices.ipPlaceholder" = "TV IP address, e.g. 192.168.1.20";
+"devices.connect" = "Connect";
+"devices.manualName" = "TCL TV (%@)";
+"devices.hide" = "Hide";
+"devices.addByIP" = "Add by IP";
+"devices.scan" = "Scan";
+"devices.scanning" = "Scanning…";
+"devices.scanningForTVs" = "Scanning for TVs";
+
+/* Pairing screen */
+"pairing.title" = "Enter the code on your TV";
+"pairing.subtitle" = "A 6-character code is showing on screen.";
+"pairing.pair" = "Pair";
+
+/* Remote screen */
+"remote.power" = "Power";
+"remote.input" = "Input";
+"remote.inputSource" = "Input source";
+"remote.hdmi" = "HDMI %@";
+"remote.av" = "AV";
+"remote.liveTV" = "Live TV";
+"remote.volumeShort" = "VOL";
+"remote.channelShort" = "CH";
+"remote.tab.apps" = "Apps";
+"remote.tab.keypad" = "Keypad";
+"remote.tab.type" = "Type";
+"remote.tab.more" = "More";
+"remote.pairCard.title" = "Pair with this TV";
+"remote.pairCard.subtitle" = "One-time setup. A code will appear on the TV.";
+"remote.offlineCard.title" = "TV is unreachable";
+"remote.offlineCard.subtitle" = "Retrying automatically…";
+"remote.retry" = "Retry";
+"remote.repair" = "Re-pair";
+"remote.typing.placeholder" = "Type on TV…";
+"remote.typing.enter" = "Enter";
+"remote.typing.enterHelp" = "Send Enter to the TV";
+"remote.typing.hint" = "Open a search or text box on the TV, then type here. Letters appear on the TV as you type; Return sends Enter.";
+
+/* Volume bar */
+"volume.mute" = "Mute";
+"volume.unmute" = "Unmute";
+"volume.muted" = "Muted";
+"volume.label" = "Volume";
+"volume.value" = "%d of %d";
+
+/* Apps */
+"apps.search" = "Search apps";
+"apps.connectToSee" = "Connect to see apps";
+"apps.open" = "Open %@";
+"apps.removeShortcut" = "Remove Shortcut";
+"apps.addAnApp" = "Add an app";
+"apps.picker.title" = "Add apps";
+"apps.picker.explanation" = "Google TV doesn't share its installed apps, so pick the ones you have. Apps that aren't installed won't open.";
+"apps.picker.allAdded" = "All of these apps are already added.";
+"apps.picker.noMatch" = "No match. Add it with a custom link below.";
+"apps.picker.addApp" = "Add %@";
+"apps.picker.customLink" = "Custom link";
+"apps.picker.linkPlaceholder" = "App link, e.g. https://www.twitch.tv";
+
+/* Settings */
+"settings.tab.general" = "General";
+"settings.tab.look" = "Look";
+"settings.tab.tvs" = "TVs";
+"settings.tab.about" = "About";
+"settings.startup" = "Startup";
+"settings.launchAtLogin" = "Launch at login";
+"settings.connectAutomatically" = "Connect automatically";
+"settings.connection" = "Connection";
+"settings.retryEvery" = "Retry offline TV every";
+"settings.notifications" = "Notifications";
+"settings.keyboard" = "Keyboard";
+"settings.keyboard.navigate" = "Navigate";
+"settings.keyboard.okBack" = "OK · Back";
+"settings.keyboard.backspace" = "Backspace";
+"settings.keyboard.playMuteHome" = "Play · Mute · Home";
+"settings.keyboard.volume" = "Volume";
+"settings.colorTheme" = "Color theme";
+"settings.customColor" = "Custom color";
+"settings.appearance" = "Appearance";
+"settings.savedTVs" = "Saved TVs";
+"settings.savedTVs.empty" = "TVs appear here after you connect to them.";
+"settings.favoriteHelp" = "Favorite: connects first";
+"settings.forgetHelp" = "Forget this TV";
+"settings.clearHistory" = "Clear History";
+"settings.resetPairing" = "Reset Pairing";
+"settings.confirmClear" = "Forget all TVs except the current one?";
+"settings.confirmReset" = "Reset Google TV pairing?";
+"settings.resetMessage" = "Deletes the pairing certificate from your Keychain. Every Google TV will show a new code to pair again.";
+
+/* About */
+"about.version" = "Version %@";
+"about.description" = "Controls TCL Google TV, Android TV and Roku TV over your Wi-Fi. No account, no cloud.";
+"about.updateAvailable" = "Version %@ is available";
+"about.download" = "Download";
+"about.upToDate" = "You're up to date";
+"about.checking" = "Checking…";
+"about.checkForUpdates" = "Check for Updates";
+
+/* Themes and appearance */
+"theme.violet" = "Violet";
+"theme.ocean" = "Ocean";
+"theme.sunset" = "Sunset";
+"theme.forest" = "Forest";
+"theme.rose" = "Rose";
+"theme.tclRed" = "TCL Red";
+"theme.graphite" = "Graphite";
+"theme.custom" = "Custom";
+"appearance.system" = "System";
+"appearance.light" = "Light";
+"appearance.dark" = "Dark";
+
+/* Toasts */
+"toast.reconnected" = "Reconnected";
+"toast.paired" = "Paired";
+"toast.pairingFailed" = "Pairing failed: %@";
+"toast.pairingReset" = "Pairing reset. Google TVs will ask for a new code.";
+"toast.opening" = "Opening %@…";
+"toast.loginItemFailed" = "Couldn't change login item: %@";
+"toast.unsupported" = "%@ isn't available on this TV";
+
+/* macOS notifications */
+"notification.disconnected.title" = "TV disconnected";
+"notification.disconnected.body" = "%@ dropped the connection. Retrying…";
+"notification.reconnected.title" = "Reconnected";
+"notification.reconnected.body" = "%@ is back.";
+"notification.pairingRequired.title" = "Pairing required";
+"notification.unavailable.title" = "TV unavailable";
+"notification.paired.title" = "Paired";
+"notification.paired.body" = "%@ is ready to control.";

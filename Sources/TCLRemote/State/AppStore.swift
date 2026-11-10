@@ -50,7 +50,7 @@ final class Store: ObservableObject {
     var known: [KnownTV] { library.tvs }
     var sortedKnown: [KnownTV] { library.sorted }
     var current: KnownTV? { library.saved(tv?.id) }
-    var displayName: String { current?.name ?? tv?.name ?? "TCL Remote" }
+    var displayName: String { current?.name ?? tv?.name ?? L10n.App.name }
     var newTVs: [TV] { library.unsaved(found) }
     func isOnline(_ tv: TV) -> Bool { found.contains { $0.id == tv.id } }
     var displayedApps: [TVApp] { library.apps(for: tv?.id, tvApps: apps) }
@@ -105,7 +105,7 @@ final class Store: ObservableObject {
         r.onDisconnect = { [weak self] in
             guard let self, self.link == .connected else { return }
             withAnimation(.smooth) { self.link = .failed }
-            SystemNotifications.post("TV disconnected", "\(self.displayName) dropped the connection. Retrying…")
+            SystemNotifications.post(L10n.Notification.Disconnected.title, L10n.Notification.Disconnected.body(self.displayName))
             self.scheduleRetry()
         }
     }
@@ -117,7 +117,10 @@ final class Store: ObservableObject {
             do {
                 try await remote.connect()
                 withAnimation(.smooth) { link = .connected }
-                if failures > 0 { show("Reconnected"); SystemNotifications.post("Reconnected", "\(displayName) is back.") }
+                if failures > 0 {
+                    show(L10n.Toast.reconnected)
+                    SystemNotifications.post(L10n.Notification.Reconnected.title, L10n.Notification.Reconnected.body(displayName))
+                }
                 failures = 0
                 update { $0.remember(tv) }
                 let list = await remote.apps()
@@ -126,7 +129,10 @@ final class Store: ObservableObject {
                 // A saved TV was paired before, so failing means offline or moved, not unpaired.
                 let needsPairing = remote is PairingCapable && !library.isSaved(tv)
                 withAnimation(.smooth) { link = needsPairing ? .needsPairing : .failed }
-                if failures == 0 { SystemNotifications.post(needsPairing ? "Pairing required" : "TV unavailable", displayName) }
+                if failures == 0 {
+                    let title = needsPairing ? L10n.Notification.PairingRequired.title : L10n.Notification.Unavailable.title
+                    SystemNotifications.post(title, displayName)
+                }
                 failures += 1
                 if needsPairing { return }
                 if failures == 1 { scan() } // maybe its IP changed
@@ -152,7 +158,7 @@ final class Store: ObservableObject {
         guard let p = remote as? PairingCapable else { return }
         go(.pairing)
         Task {
-            do { try await p.startPairing() } catch { show("Pairing failed: \(error.localizedDescription)"); go(.remote) }
+            do { try await p.startPairing() } catch { show(L10n.Toast.pairingFailed(error.localizedDescription)); go(.remote) }
         }
     }
 
@@ -161,8 +167,8 @@ final class Store: ObservableObject {
         Task {
             do {
                 try await p.finishPairing(code: code)
-                show("Paired")
-                SystemNotifications.post("Paired", "\(displayName) is ready to control.")
+                show(L10n.Toast.paired)
+                SystemNotifications.post(L10n.Notification.Paired.title, L10n.Notification.Paired.body(displayName))
                 go(.remote)
                 connect()
             } catch {
@@ -176,7 +182,7 @@ final class Store: ObservableObject {
 
     func resetPairing() {
         ClientIdentity.reset()
-        show("Pairing reset. Google TVs will ask for a new code.")
+        show(L10n.Toast.pairingReset)
         if remote is PairingCapable { withAnimation(.smooth) { link = .needsPairing } }
     }
 
@@ -216,7 +222,7 @@ final class Store: ObservableObject {
 
     func launch(_ app: TVApp) {
         run { try await $0.launch(app) }
-        show("Opening \(app.name)…")
+        show(L10n.Toast.opening(app.name))
         if let id = tv?.id { update { $0.recordLaunch(app, on: id) } }
     }
 
@@ -231,7 +237,7 @@ final class Store: ObservableObject {
     func nudgeVolume(_ delta: Int) { setVolume((stepper?.target ?? volume?.level ?? 0) + delta) }
 
     func setLaunchAtLogin(_ on: Bool) {
-        do { try LoginItem.set(on) } catch { show("Couldn't change login item: \(error.localizedDescription)") }
+        do { try LoginItem.set(on) } catch { show(L10n.Toast.loginItemFailed(error.localizedDescription)) }
         launchAtLogin = LoginItem.isEnabled
     }
 
@@ -245,7 +251,7 @@ final class Store: ObservableObject {
                 try await op(remote)
                 if link != .connected, let tv { withAnimation(.smooth) { link = .connected }; update { $0.remember(tv) } }
             } catch TVError.unsupported(let name) {
-                show("\(name) isn't available on this TV")
+                show(L10n.Toast.unsupported(name))
             } catch {
                 withAnimation(.smooth) { link = .failed }
                 show(error.localizedDescription)

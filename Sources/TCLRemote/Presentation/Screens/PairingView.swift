@@ -13,8 +13,8 @@ struct PairingView: View {
             Image(systemName: "lock.tv").font(.system(size: 36, weight: .light))
                 .foregroundStyle(Theme.accent).symbolEffect(.pulse)
             VStack(spacing: 4) {
-                Text("Enter the code on your TV").font(.headline)
-                Text("A 6-character code is showing on screen.").font(.caption).foregroundStyle(.secondary)
+                Text(L10n.Pairing.title).font(.headline)
+                Text(L10n.Pairing.subtitle).font(.caption).foregroundStyle(.secondary)
             }
             ZStack {
                 TextField("", text: $code).focused($focused).opacity(0.01)
@@ -55,8 +55,8 @@ struct PairingView: View {
             .onChange(of: s.pairError) { code = "" }
 
             HStack {
-                Button("Cancel") { s.cancelPairing() }.buttonStyle(.bordered)
-                Button("Pair") { s.submitCode(code) }.buttonStyle(.borderedProminent).disabled(code.count < 6)
+                Button(L10n.Common.cancel) { s.cancelPairing() }.buttonStyle(.bordered)
+                Button(L10n.Pairing.pair) { s.submitCode(code) }.buttonStyle(.borderedProminent).disabled(code.count < 6)
             }
         }
         .padding(.vertical, 8)

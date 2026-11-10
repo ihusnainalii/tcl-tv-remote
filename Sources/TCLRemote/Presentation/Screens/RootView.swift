@@ -46,11 +46,11 @@ struct Header: View {
 
     var status: (String, Color) {
         switch s.link {
-        case .idle: ("Not connected", .secondary)
-        case .connecting: ("Connecting…", .orange)
-        case .connected: (s.tvOn == false ? "Standby" : "Connected", .green)
-        case .needsPairing: ("Pairing required", .yellow)
-        case .failed: ("Offline", .red)
+        case .idle: (L10n.Status.notConnected, .secondary)
+        case .connecting: (L10n.Status.connecting, .orange)
+        case .connected: (s.tvOn == false ? L10n.Status.standby : L10n.Status.connected, .green)
+        case .needsPairing: (L10n.Status.pairingRequired, .yellow)
+        case .failed: (L10n.Status.offline, .red)
         }
     }
 
@@ -69,21 +69,21 @@ struct Header: View {
             }
             Spacer()
             if s.screen == .settings {
-                Button { s.closeSettings() } label: { icon("xmark") }.buttonStyle(PressStyle()).help("Close Settings")
+                Button { s.closeSettings() } label: { icon("xmark") }.buttonStyle(PressStyle()).help(L10n.Header.closeSettings)
             } else if s.screen == .remote {
-                Button { s.showDevices() } label: { icon("list.bullet") }.buttonStyle(PressStyle()).help("TVs")
+                Button { s.showDevices() } label: { icon("list.bullet") }.buttonStyle(PressStyle()).help(L10n.Header.tvs)
             } else if s.screen == .devices, s.tv != nil {
-                Button { s.select(s.tv!) } label: { icon("appletvremote.gen4") }.buttonStyle(PressStyle()).help("Remote")
+                Button { s.select(s.tv!) } label: { icon("appletvremote.gen4") }.buttonStyle(PressStyle()).help(L10n.Header.remote)
             }
             Menu {
-                Toggle("Launch at Login", isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
-                Button("Find TVs…") { s.showDevices() }
-                Button("Settings…") { s.showSettings() }.keyboardShortcut(",")
+                Toggle(L10n.Menu.launchAtLogin, isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
+                Button(L10n.Menu.findTVs) { s.showDevices() }
+                Button(L10n.Menu.settings) { s.showSettings() }.keyboardShortcut(",")
                 Divider()
-                Button("Quit TCL Remote") { NSApp.terminate(nil) }.keyboardShortcut("q")
+                Button(L10n.Menu.quit) { NSApp.terminate(nil) }.keyboardShortcut("q")
             } label: { icon("ellipsis") }
             .menuStyle(.button).buttonStyle(PressStyle()).menuIndicator(.hidden).fixedSize()
-            .accessibilityLabel("More options")
+            .accessibilityLabel(L10n.Header.moreOptions)
         }
         .animation(.smooth, value: s.link)
     }

@@ -4,7 +4,18 @@ import TVKit
 
 /// Settings shown inside the menu bar panel, as its own screen.
 struct SettingsView: View {
-    enum Tab: String, CaseIterable { case general = "General", look = "Look", tvs = "TVs", about = "About" }
+    enum Tab: String, CaseIterable {
+        case general = "General", look = "Look", tvs = "TVs", about = "About" // raw values are stored; don't localize
+
+        var title: String {
+            switch self {
+            case .general: L10n.Settings.Tab.general
+            case .look: L10n.Settings.Tab.look
+            case .tvs: L10n.Settings.Tab.tvs
+            case .about: L10n.Settings.Tab.about
+            }
+        }
+    }
 
     // AppStorage survives the view rebuild that a theme change triggers.
     @AppStorage("settingsTab") private var tab = Tab.general.rawValue
@@ -15,7 +26,7 @@ struct SettingsView: View {
             HStack(spacing: 2) {
                 ForEach(Tab.allCases, id: \.self) { t in
                     Button { withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { tab = t.rawValue } } label: {
-                        Text(t.rawValue).font(.caption.weight(.semibold))
+                        Text(t.title).font(.caption.weight(.semibold))
                             .foregroundStyle(tab == t.rawValue ? .white : .secondary)
                             .frame(maxWidth: .infinity).padding(.vertical, 6)
                             .background {
@@ -98,14 +109,14 @@ private struct GeneralSettings: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            Card(title: "Startup") {
-                ToggleRow(title: "Launch at login", isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
+            Card(title: L10n.Settings.startup) {
+                ToggleRow(title: L10n.Settings.launchAtLogin, isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
                 Divider()
-                ToggleRow(title: "Connect automatically", isOn: $autoConnect)
+                ToggleRow(title: L10n.Settings.connectAutomatically, isOn: $autoConnect)
             }
-            Card(title: "Connection") {
+            Card(title: L10n.Settings.connection) {
                 HStack {
-                    Text("Retry offline TV every").font(.callout)
+                    Text(L10n.Settings.retryEvery).font(.callout)
                     Spacer()
                     Picker("", selection: $retry) {
                         Text("5 s").tag(5.0); Text("10 s").tag(10.0); Text("30 s").tag(30.0); Text("1 min").tag(60.0)
@@ -115,18 +126,18 @@ private struct GeneralSettings: View {
                 .frame(minHeight: 22)
                 .padding(.vertical, 7)
                 Divider()
-                ToggleRow(title: "Notifications", isOn: $notify)
+                ToggleRow(title: L10n.Settings.notifications, isOn: $notify)
             }
-            Card(title: "Keyboard") {
-                InfoRow(title: "Navigate", value: "← ↑ → ↓")
+            Card(title: L10n.Settings.keyboard) {
+                InfoRow(title: L10n.Settings.Keyboard.navigate, value: "← ↑ → ↓")
                 Divider()
-                InfoRow(title: "OK · Back", value: "⏎ · esc")
+                InfoRow(title: L10n.Settings.Keyboard.okBack, value: "⏎ · esc")
                 Divider()
-                InfoRow(title: "Backspace", value: "⌫")
+                InfoRow(title: L10n.Settings.Keyboard.backspace, value: "⌫")
                 Divider()
-                InfoRow(title: "Play · Mute · Home", value: "␣ · M · H")
+                InfoRow(title: L10n.Settings.Keyboard.playMuteHome, value: "␣ · M · H")
                 Divider()
-                InfoRow(title: "Volume", value: "+ / −")
+                InfoRow(title: L10n.Settings.Keyboard.volume, value: "+ / −")
             }
         }
     }
@@ -144,21 +155,21 @@ private struct LookSettings: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            Card(title: "Color theme") {
+            Card(title: L10n.Settings.colorTheme) {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 10) {
                     ForEach(AccentStyle.allCases) { swatch($0) }
                 }
                 .padding(.vertical, 10)
                 Divider()
                 HStack {
-                    Text("Custom color").font(.callout)
+                    Text(L10n.Settings.customColor).font(.callout)
                     Spacer()
-                    ColorPicker("Custom color", selection: customColor, supportsOpacity: false).labelsHidden()
+                    ColorPicker(L10n.Settings.customColor, selection: customColor, supportsOpacity: false).labelsHidden()
                 }
                 .frame(minHeight: 22)
                 .padding(.vertical, 7)
             }
-            Card(title: "Appearance") {
+            Card(title: L10n.Settings.appearance) {
                 Picker("", selection: $mode) {
                     ForEach(AppearanceMode.allCases) { Text($0.title).tag($0.rawValue) }
                 }
@@ -199,9 +210,9 @@ private struct TVSettings: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            Card(title: "Saved TVs") {
+            Card(title: L10n.Settings.savedTVs) {
                 if s.known.isEmpty {
-                    Text("TVs appear here after you connect to them.").font(.caption).foregroundStyle(.secondary)
+                    Text(L10n.Settings.SavedTVs.empty).font(.caption).foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity).padding(.vertical, 14)
                 }
                 ForEach(Array(s.sortedKnown.enumerated()), id: \.element.id) { i, k in
@@ -212,33 +223,33 @@ private struct TVSettings: View {
                                 .foregroundStyle(k.favorite == true ? .yellow : .secondary)
                                 .contentTransition(.symbolEffect(.replace))
                         }
-                        .buttonStyle(.plain).help("Favorite: connects first")
+                        .buttonStyle(.plain).help(L10n.Settings.favoriteHelp)
                         VStack(alignment: .leading, spacing: 1) {
-                            TextField("Name", text: Binding(get: { k.name }, set: { s.rename(k, $0) }))
+                            TextField(L10n.Common.name, text: Binding(get: { k.name }, set: { s.rename(k, $0) }))
                                 .textFieldStyle(.plain).font(.callout.weight(.medium))
                             Text("\(k.tv.kind.rawValue) · \(k.tv.host)").font(.caption2).foregroundStyle(.secondary)
                         }
                         Spacer()
                         Button(role: .destructive) { s.forget(k) } label: { Image(systemName: "trash").font(.caption) }
-                            .buttonStyle(.plain).foregroundStyle(.secondary).help("Forget this TV")
+                            .buttonStyle(.plain).foregroundStyle(.secondary).help(L10n.Settings.forgetHelp)
                     }
                     .padding(.vertical, 7)
                 }
             }
             HStack {
-                Button("Clear History") { confirmClear = true }.disabled(s.known.count < 2)
+                Button(L10n.Settings.clearHistory) { confirmClear = true }.disabled(s.known.count < 2)
                 Spacer()
-                Button("Reset Pairing") { confirmReset = true }
+                Button(L10n.Settings.resetPairing) { confirmReset = true }
             }
             .controlSize(.small)
         }
-        .confirmationDialog("Forget all TVs except the current one?", isPresented: $confirmClear) {
-            Button("Clear History", role: .destructive) { s.clearHistory() }
+        .confirmationDialog(L10n.Settings.confirmClear, isPresented: $confirmClear) {
+            Button(L10n.Settings.clearHistory, role: .destructive) { s.clearHistory() }
         }
-        .confirmationDialog("Reset Google TV pairing?", isPresented: $confirmReset) {
-            Button("Reset Pairing", role: .destructive) { s.resetPairing() }
+        .confirmationDialog(L10n.Settings.confirmReset, isPresented: $confirmReset) {
+            Button(L10n.Settings.resetPairing, role: .destructive) { s.resetPairing() }
         } message: {
-            Text("Deletes the pairing certificate from your Keychain. Every Google TV will show a new code to pair again.")
+            Text(L10n.Settings.resetMessage)
         }
     }
 }
@@ -256,9 +267,9 @@ private struct AboutSettings: View {
             }
             .shadow(color: Theme.glow.opacity(0.35), radius: 10, y: 4)
             .padding(.top, 8)
-            Text("TCL Remote").font(.headline)
-            Text("Version \(version)").font(.caption).foregroundStyle(.secondary)
-            Text("Controls TCL Google TV, Android TV and Roku TV over your Wi-Fi. No account, no cloud.")
+            Text(L10n.App.name).font(.headline)
+            Text(L10n.About.version(version)).font(.caption).foregroundStyle(.secondary)
+            Text(L10n.About.description)
                 .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -266,13 +277,13 @@ private struct AboutSettings: View {
                 switch update {
                 case .available(let v, let url)?:
                     VStack(spacing: 6) {
-                        Text("Version \(v) is available").font(.callout.weight(.medium))
-                        Button("Download") { NSWorkspace.shared.open(url) }.buttonStyle(.borderedProminent)
+                        Text(L10n.About.updateAvailable(v)).font(.callout.weight(.medium))
+                        Button(L10n.About.download) { NSWorkspace.shared.open(url) }.buttonStyle(.borderedProminent)
                     }
-                case .upToDate?: Label("You're up to date", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                case .upToDate?: Label(L10n.About.upToDate, systemImage: "checkmark.circle.fill").foregroundStyle(.green)
                 case .failed(let msg)?: Text(msg).font(.caption).foregroundStyle(.secondary)
                 case nil:
-                    Button(checking ? "Checking…" : "Check for Updates") {
+                    Button(checking ? L10n.About.checking : L10n.About.checkForUpdates) {
                         checking = true
                         Task { update = await UpdateCheck.run(current: version); checking = false }
                     }

@@ -1,8 +1,8 @@
 name: CI
 
 # Staged pipeline. Each job is a required check on main, so a PR merges only when all pass:
-#   Build -> Tests -> Coverage
-#                  -> App bundle
+#   Lint -> Build -> Tests -> Coverage
+#                         -> App bundle
 
 on:
   pull_request:
@@ -17,8 +17,27 @@ env:
   COVERAGE_MIN: 90   # TVKit line coverage floor (currently ~97%)
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: |
+          command -v swiftlint >/dev/null || brew install swiftlint
+          command -v swiftgen >/dev/null || brew install swiftgen
+      - name: SwiftLint (strict)
+        run: swiftlint lint --strict --reporter github-actions-logging
+      - name: SwiftGen output is up to date
+        run: |
+          swiftgen config run
+          git diff --exit-code -- Sources/TCLRemote/Generated || {
+            echo "::error title=SwiftGen out of date::Run 'swiftgen' and commit Sources/TCLRemote/Generated"; exit 1; }
+
   build:
     name: Build
+    needs: lint
     runs-on: macos-15
     timeout-minutes: 15
     steps:

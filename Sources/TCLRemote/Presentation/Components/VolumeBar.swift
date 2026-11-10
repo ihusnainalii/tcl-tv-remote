@@ -18,7 +18,7 @@ struct VolumeBar: View {
                     .font(.caption).foregroundStyle(.secondary).contentTransition(.symbolEffect(.replace))
                     .frame(width: 18)
             }
-            .buttonStyle(PressStyle()).accessibilityLabel(volume.muted ? "Unmute" : "Mute")
+            .buttonStyle(PressStyle()).accessibilityLabel(volume.muted ? L10n.Volume.unmute : L10n.Volume.mute)
 
             GeometryReader { g in
                 let active = hover || dragging
@@ -52,8 +52,8 @@ struct VolumeBar: View {
         }
         .animation(.smooth(duration: 0.2), value: volume)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(volume.muted ? "Muted" : "Volume")
-        .accessibilityValue("\(volume.level) of \(volume.max)")
+        .accessibilityLabel(volume.muted ? L10n.Volume.muted : L10n.Volume.label)
+        .accessibilityValue(L10n.Volume.value(volume.level, volume.max))
         .accessibilityAdjustableAction { dir in
             if dir == .increment { s.nudgeVolume(1) } else if dir == .decrement { s.nudgeVolume(-1) }
         }

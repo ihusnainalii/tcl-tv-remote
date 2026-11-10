@@ -5,6 +5,11 @@ All notable changes to this project are listed here. The format follows [Keep a 
 ## [Unreleased]
 
 ### Added
+- SwiftLint (strict) and SwiftGen. All UI text moved to `Localizable.strings` with a generated `L10n` API, ready for translations. CI gains a Lint stage.
+
+## [1.1.0] - 2026-11-10
+
+### Added
 - Menu bar remote for TCL Google TV, Android TV and Roku TV, with discovery via Bonjour and SSDP, or adding a TV by IP address.
 - One-time code pairing for Google TV (Android TV Remote v2), with the certificate stored in the Keychain.
 - Saved TVs with last-used times, favorites and renaming; auto-connect; reconnecting after network changes, sleep or TV restarts; following a TV whose IP address changes.

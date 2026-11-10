@@ -10,7 +10,18 @@ struct RemoteView: View {
     @FocusState private var focused: Bool
     @Namespace private var ns
 
-    enum Tab: String, CaseIterable { case apps = "Apps", keypad = "Keypad", type = "Type", more = "More" }
+    enum Tab: String, CaseIterable {
+        case apps = "Apps", keypad = "Keypad", type = "Type", more = "More" // raw values are stored; don't localize
+
+        var title: String {
+            switch self {
+            case .apps: L10n.Remote.Tab.apps
+            case .keypad: L10n.Remote.Tab.keypad
+            case .type: L10n.Remote.Tab.type
+            case .more: L10n.Remote.Tab.more
+            }
+        }
+    }
 
     var body: some View {
         VStack(spacing: 14) {
@@ -21,20 +32,20 @@ struct RemoteView: View {
                     Image(systemName: "power").font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
                         .frame(width: 38, height: 38).background(Theme.power, in: Circle())
                         .shadow(color: .red.opacity(s.tvOn == false ? 0 : 0.45), radius: 8, y: 2)
-                }.buttonStyle(PressStyle()).help("Power").accessibilityLabel("Power")
+                }.buttonStyle(PressStyle()).help(L10n.Remote.power).accessibilityLabel(L10n.Remote.power)
                 Spacer()
                 Menu {
                     ForEach([Key.hdmi1, .hdmi2, .hdmi3, .hdmi4], id: \.self) { k in
-                        Button("HDMI \(k.rawValue.last!)") { s.press(k) }
+                        Button(L10n.Remote.hdmi(String(k.rawValue.last!))) { s.press(k) }
                     }
-                    Button("AV") { s.press(.av) }
-                    Button("Live TV") { s.press(.tuner) }
+                    Button(L10n.Remote.av) { s.press(.av) }
+                    Button(L10n.Remote.liveTV) { s.press(.tuner) }
                 } label: {
                     Image(systemName: "rectangle.on.rectangle").font(.system(size: 13, weight: .semibold))
                         .frame(width: 38, height: 38).pill(Circle())
                 }
-                .menuStyle(.button).buttonStyle(PressStyle()).menuIndicator(.hidden).fixedSize().help("Input")
-                .accessibilityLabel("Input source")
+                .menuStyle(.button).buttonStyle(PressStyle()).menuIndicator(.hidden).fixedSize().help(L10n.Remote.input)
+                .accessibilityLabel(L10n.Remote.inputSource)
                 key(.search, "magnifyingglass", size: 38, circle: true)
                 key(.settings, "gearshape", size: 38, circle: true)
             }
@@ -48,7 +59,8 @@ struct RemoteView: View {
             }
 
             HStack(alignment: .center, spacing: 10) {
-                Rocker(up: .volUp, down: .volDown, upIcon: "speaker.plus.fill", downIcon: "speaker.minus.fill", label: "VOL")
+                Rocker(up: .volUp, down: .volDown, upIcon: "speaker.plus.fill", downIcon: "speaker.minus.fill",
+                       label: L10n.Remote.volumeShort)
                 VStack(spacing: 8) {
                     key(.mute, "speaker.slash.fill")
                     HStack(spacing: 6) {
@@ -57,7 +69,7 @@ struct RemoteView: View {
                         key(.forward, "forward.fill", size: 34)
                     }
                 }
-                Rocker(up: .chUp, down: .chDown, upIcon: "chevron.up", downIcon: "chevron.down", label: "CH")
+                Rocker(up: .chUp, down: .chDown, upIcon: "chevron.up", downIcon: "chevron.down", label: L10n.Remote.channelShort)
             }
 
             if let v = s.volume { VolumeBar(volume: v).transition(.opacity.combined(with: .move(edge: .top))) }
@@ -87,11 +99,12 @@ struct RemoteView: View {
     @ViewBuilder var banner: some View {
         switch s.link {
         case .needsPairing:
-            card(icon: "link.badge.plus", title: "Pair with this TV", subtitle: "One-time setup. A code will appear on the TV.",
-                 action: "Pair") { s.beginPairing() }
+            card(icon: "link.badge.plus", title: L10n.Remote.PairCard.title, subtitle: L10n.Remote.PairCard.subtitle,
+                 action: L10n.Pairing.pair) { s.beginPairing() }
         case .failed:
-            card(icon: "wifi.exclamationmark", title: "TV is unreachable", subtitle: "Retrying automatically…",
-                 action: "Retry", secondary: s.tv?.kind == .androidTV ? ("Re-pair", { s.beginPairing() }) : nil) { s.connect() }
+            card(icon: "wifi.exclamationmark", title: L10n.Remote.OfflineCard.title, subtitle: L10n.Remote.OfflineCard.subtitle,
+                 action: L10n.Remote.retry,
+                 secondary: s.tv?.kind == .androidTV ? (L10n.Remote.repair, { s.beginPairing() }) : nil) { s.connect() }
         default: EmptyView()
         }
     }
@@ -119,7 +132,7 @@ struct RemoteView: View {
             HStack(spacing: 2) {
                 ForEach(Tab.allCases, id: \.self) { t in
                     Button { withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { tab = t } } label: {
-                        Text(t.rawValue).font(.caption.weight(.semibold))
+                        Text(t.title).font(.caption.weight(.semibold))
                             .foregroundStyle(tab == t ? .white : .secondary)
                             .frame(maxWidth: .infinity).padding(.vertical, 6)
                             .background {
@@ -182,7 +195,7 @@ struct RemoteView: View {
     var typer: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                TextField("Type on TV…", text: $text)
+                TextField(L10n.Remote.Typing.placeholder, text: $text)
                     .textFieldStyle(.plain).padding(9).pill(RoundedRectangle(cornerRadius: 10))
                     .onChange(of: text) { old, new in mirror(old, new) }
                     .onSubmit { s.press(.enter); text = "" }
@@ -190,9 +203,9 @@ struct RemoteView: View {
                     Image(systemName: "return").font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
                         .frame(width: 34, height: 34).background(Theme.accent, in: Circle())
                 }
-                .buttonStyle(PressStyle()).help("Send Enter to the TV").accessibilityLabel("Enter")
+                .buttonStyle(PressStyle()).help(L10n.Remote.Typing.enterHelp).accessibilityLabel(L10n.Remote.Typing.enter)
             }
-            Text("Open a search or text box on the TV, then type here. Letters appear on the TV as you type; Return sends Enter.")
+            Text(L10n.Remote.Typing.hint)
                 .font(.caption2).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
     }

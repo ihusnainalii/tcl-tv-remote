@@ -41,7 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
         linkObserver = store.$link.sink { [weak self] link in
             let name = link == .connected ? "appletvremote.gen4.fill" : "appletvremote.gen4"
-            self?.statusItem.button?.image = NSImage(systemSymbolName: name, accessibilityDescription: "TCL Remote")
+            self?.statusItem.button?.image = NSImage(systemSymbolName: name, accessibilityDescription: L10n.App.name)
         }
 
         // Testing and screenshot aid: open the panel at launch, optionally on a given screen.

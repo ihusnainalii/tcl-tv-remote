@@ -16,12 +16,12 @@ struct AppsGrid: View {
             if s.displayedApps.count > 9 {
                 HStack(spacing: 6) {
                     Image(systemName: "magnifyingglass").font(.caption).foregroundStyle(.secondary)
-                    TextField("Search apps", text: $query).textFieldStyle(.plain).font(.caption)
+                    TextField(L10n.Apps.search, text: $query).textFieldStyle(.plain).font(.caption)
                 }
                 .padding(7).pill(RoundedRectangle(cornerRadius: 8))
             }
             if s.link != .connected && s.displayedApps.isEmpty {
-                Text("Connect to see apps").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 60)
+                Text(L10n.Apps.connectToSee).font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 60)
             } else {
                 FitScroll(maxHeight: 220) {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
@@ -55,10 +55,10 @@ struct AppsGrid: View {
             .frame(maxWidth: .infinity, minHeight: 68, maxHeight: 68)
         }
         .buttonStyle(PressStyle())
-        .accessibilityLabel("Open \(app.name)")
+        .accessibilityLabel(L10n.Apps.open(app.name))
         .contextMenu {
-            Button(s.isFavorite(app) ? "Remove from Favorites" : "Add to Favorites") { s.toggleFavorite(app) }
-            if s.isCustom(app) { Button("Remove Shortcut", role: .destructive) { s.removeCustomApp(app) } }
+            Button(s.isFavorite(app) ? L10n.Common.removeFromFavorites : L10n.Common.addToFavorites) { s.toggleFavorite(app) }
+            if s.isCustom(app) { Button(L10n.Apps.removeShortcut, role: .destructive) { s.removeCustomApp(app) } }
         }
     }
 
@@ -69,12 +69,12 @@ struct AppsGrid: View {
                     .frame(width: 38, height: 38)
                     .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [3])))
                     .foregroundStyle(.secondary)
-                Text("Add").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+                Text(L10n.Common.add).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, minHeight: 68, maxHeight: 68)
         }
         .buttonStyle(PressStyle())
-        .accessibilityLabel("Add an app")
+        .accessibilityLabel(L10n.Apps.addAnApp)
         .popover(isPresented: $adding, arrowEdge: .bottom) { AppPicker().environmentObject(s) }
     }
 
@@ -129,18 +129,18 @@ struct AppPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Add apps").font(.headline)
-            Text("Google TV doesn't share its installed apps, so pick the ones you have. Apps that aren't installed won't open.")
+            Text(L10n.Apps.Picker.title).font(.headline)
+            Text(L10n.Apps.Picker.explanation)
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass").font(.caption).foregroundStyle(.secondary)
-                TextField("Search apps", text: $query).textFieldStyle(.plain).font(.callout)
+                TextField(L10n.Apps.search, text: $query).textFieldStyle(.plain).font(.callout)
             }
             .padding(7).pill(RoundedRectangle(cornerRadius: 8))
 
             if candidates.isEmpty {
-                Text(query.isEmpty ? "All of these apps are already added." : "No match. Add it with a custom link below.")
+                Text(query.isEmpty ? L10n.Apps.Picker.allAdded : L10n.Apps.Picker.noMatch)
                     .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 60)
             } else {
                 ScrollView {
@@ -154,7 +154,7 @@ struct AppPicker: View {
                                 .frame(maxWidth: .infinity).padding(.vertical, 4)
                             }
                             .buttonStyle(PressStyle())
-                            .help("Add \(app.name)")
+                            .help(L10n.Apps.Picker.addApp(app.name))
                             .transition(.scale.combined(with: .opacity))
                         }
                     }
@@ -163,13 +163,13 @@ struct AppPicker: View {
                 .frame(height: 210)
             }
 
-            DisclosureGroup("Custom link", isExpanded: $showCustom) {
+            DisclosureGroup(L10n.Apps.Picker.customLink, isExpanded: $showCustom) {
                 VStack(spacing: 6) {
-                    TextField("Name", text: $name)
-                    TextField("App link, e.g. https://www.twitch.tv", text: $link)
+                    TextField(L10n.Common.name, text: $name)
+                    TextField(L10n.Apps.Picker.linkPlaceholder, text: $link)
                     HStack {
                         Spacer()
-                        Button("Add") {
+                        Button(L10n.Common.add) {
                             s.addCustomApp(name: name, id: link)
                             name = ""; link = ""
                         }
