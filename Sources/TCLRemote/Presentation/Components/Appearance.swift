@@ -53,14 +53,22 @@ enum AppearanceMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String { rawValue.capitalized }
 
-    /// Applies to every window of the app, including the popover chrome.
-    static func apply() {
-        let mode = AppearanceMode(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .system
-        NSApp.appearance = switch mode {
+    static let changed = Notification.Name("TCLRemoteAppearanceChanged")
+
+    static var current: AppearanceMode { AppearanceMode(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .system }
+
+    var nsAppearance: NSAppearance? {
+        switch self {
         case .system: nil
         case .light: NSAppearance(named: .aqua)
         case .dark: NSAppearance(named: .darkAqua)
         }
+    }
+
+    /// Sets the app appearance and tells the popover, which otherwise follows the menu bar, not the app.
+    static func apply() {
+        NSApp.appearance = current.nsAppearance
+        NotificationCenter.default.post(name: changed, object: nil)
     }
 }
 

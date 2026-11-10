@@ -20,8 +20,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var statusItem: NSStatusItem!
     private let popover = NSPopover()
     private var linkObserver: AnyCancellable?
+    private var appearanceObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        appearanceObserver = NotificationCenter.default.addObserver(forName: AppearanceMode.changed, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.popover.appearance = AppearanceMode.current.nsAppearance }
+        }
         AppearanceMode.apply()
         let host = NSHostingController(rootView: RootView().environmentObject(store))
         host.sizingOptions = [.preferredContentSize]
