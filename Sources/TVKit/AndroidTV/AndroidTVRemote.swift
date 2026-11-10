@@ -5,23 +5,37 @@ import Security
 
 @MainActor
 public final class AndroidTVRemote: TVRemote, PairingCapable, StateReporting {
+    public typealias IdentityProvider = @Sendable () async throws -> SecIdentity
+
     public let host: String
+    private let port: UInt16
+    private let pairingPort: UInt16
+    private let identity: IdentityProvider
     private var conn: TLSConn?
     private var pairConn: TLSConn?
     private var active = false
-    private var imeCounter = 0, fieldCounter = 0
     public var onPower: ((Bool) -> Void)?
     public var onVolume: ((TVVolume) -> Void)?
     public var onDisconnect: (() -> Void)?
 
     public static let features = 622 // ping | key | ime | power | volume | app link
 
-    public init(host: String) { self.host = host }
+    public convenience init(host: String) {
+        self.init(host: host, port: 6466, pairingPort: 6467) { try await ClientIdentity.loadOffMain() }
+    }
+
+    /// Ports and identity are injectable so tests can run against a fake TV on localhost.
+    init(host: String, port: UInt16, pairingPort: UInt16, identity: @escaping IdentityProvider) {
+        self.host = host
+        self.port = port
+        self.pairingPort = pairingPort
+        self.identity = identity
+    }
 
     // Pairing: TV shows a 6-char hex code after this returns.
     public func startPairing() async throws {
         pairConn?.cancel()
-        let c = TLSConn(host: host, port: 6467, identity: try await ClientIdentity.loadOffMain())
+        let c = TLSConn(host: host, port: pairingPort, identity: try await identity())
         try await c.start()
         pairConn = c
         func step(_ field: Int, _ body: (inout PB) -> Void) async throws {
@@ -38,7 +52,7 @@ public final class AndroidTVRemote: TVRemote, PairingCapable, StateReporting {
         guard let c = pairConn, let serverKey = c.serverKey,
               let server = rsaComponents(serverKey) else { throw TVError.closed }
         var cert: SecCertificate?
-        SecIdentityCopyCertificate(try await ClientIdentity.loadOffMain(), &cert)
+        SecIdentityCopyCertificate(try await identity(), &cert)
         guard let cert, let key = SecCertificateCopyKey(cert), let client = rsaComponents(key) else {
             throw TVError.identity("client key")
         }
@@ -55,7 +69,7 @@ public final class AndroidTVRemote: TVRemote, PairingCapable, StateReporting {
         if conn != nil, active { return }
         conn?.cancel()
         active = false
-        let c = TLSConn(host: host, port: 6466, identity: try await ClientIdentity.loadOffMain())
+        let c = TLSConn(host: host, port: port, identity: try await identity())
         conn = c
         try await c.start()
         Task { [weak self] in
@@ -84,10 +98,6 @@ public final class AndroidTVRemote: TVRemote, PairingCapable, StateReporting {
         if let ping = m.msg(8) {
             try? await c.send(PB.build { $0.msg(9) { $0.int(1, ping.int(1) ?? 0) } })
         }
-        if let ime = m.msg(21) {
-            imeCounter = ime.int(1) ?? imeCounter
-            fieldCounter = ime.int(2) ?? fieldCounter
-        }
         if let start = m.msg(40) { onPower?((start.int(1) ?? 0) != 0) }
         if let v = m.msg(50), let max = v.int(6), max > 0 {
             onVolume?(TVVolume(level: v.int(7) ?? 0, max: max, muted: (v.int(8) ?? 0) != 0))
@@ -111,8 +121,7 @@ public final class AndroidTVRemote: TVRemote, PairingCapable, StateReporting {
     }
 
     /// Types by sending one key press per character, which works in any focused text field.
-    /// ponytail: Remote v2 key events carry no Shift, so letters arrive lowercase; the IME
-    /// batch-edit path keeps case but only works while the TV reports an open keyboard.
+    /// ponytail: Remote v2 key events carry no Shift, so letters arrive lowercase.
     public func type(_ text: String) async throws {
         for ch in text.lowercased() {
             guard let code = Self.keyCode(for: ch) else { continue }

@@ -5,16 +5,18 @@ import Security
 // MARK: - Client certificate (generated once, kept in Application Support)
 
 public enum ClientIdentity {
-    static let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    // Overridable so tests use their own Keychain item and folder, never the user's pairing.
+    static var dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         .appendingPathComponent("TCLRemote", isDirectory: true)
+    static var service = "TCLRemote"
     private static let pass = "tclremote"
     private static var cached: SecIdentity?
 
-    private static let keychainQuery: [String: Any] = [
-        kSecClass as String: kSecClassGenericPassword,
-        kSecAttrService as String: "TCLRemote",
-        kSecAttrAccount as String: "client-identity",
-    ]
+    private static var keychainQuery: [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: service,
+         kSecAttrAccount as String: "client-identity"]
+    }
 
     /// The PKCS#12 blob lives in the Keychain; the on-disk copy is only used to migrate older installs.
     private static func p12Data() throws -> Data {
@@ -47,6 +49,9 @@ public enum ClientIdentity {
         cached = nil
     }
 
+    /// Forgets the in-memory copy only (tests use it to exercise the Keychain read path).
+    static func dropCache() { cached = nil }
+
     /// Keychain reads can block on a macOS permission prompt, so never do them on the main thread.
     static func loadOffMain() async throws -> SecIdentity {
         try await Task.detached(priority: .userInitiated) { try load() }.value
@@ -65,7 +70,7 @@ public enum ClientIdentity {
     }
 
     // ponytail: shells out to the system LibreSSL instead of hand-writing X.509 DER.
-    private static func generate(in tmp: URL) throws -> Data {
+    static func generate(in tmp: URL) throws -> Data {
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
         let key = tmp.appendingPathComponent("key.pem").path, cert = tmp.appendingPathComponent("cert.pem").path

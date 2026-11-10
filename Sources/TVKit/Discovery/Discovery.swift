@@ -9,25 +9,42 @@ import Network
 public final class Discovery {
     private var browser: NWBrowser?
     private var resolving: [NWConnection] = []
+    private let serviceType: String
+    private let ssdpHost: String
+    private let ssdpPort: UInt16
+    private let ssdpSeconds: Int
+    private let settle: Duration
 
-    public init() {}
+    public convenience init() {
+        self.init(serviceType: "_androidtvremote2._tcp", ssdpHost: "239.255.255.250", ssdpPort: 1900, ssdpSeconds: 4, settle: .seconds(1))
+    }
+
+    /// Everything is injectable so tests can discover a fake TV on localhost.
+    init(serviceType: String, ssdpHost: String, ssdpPort: UInt16, ssdpSeconds: Int, settle: Duration) {
+        self.serviceType = serviceType
+        self.ssdpHost = ssdpHost
+        self.ssdpPort = ssdpPort
+        self.ssdpSeconds = ssdpSeconds
+        self.settle = settle
+    }
 
     public func scan(found: @escaping @MainActor (TV) -> Void) async {
-        let b = NWBrowser(for: .bonjour(type: "_androidtvremote2._tcp", domain: nil), using: .tcp)
+        let b = NWBrowser(for: .bonjour(type: serviceType, domain: nil), using: .tcp)
         b.browseResultsChangedHandler = { [weak self] results, _ in
             Task { @MainActor in results.forEach { self?.resolve($0, found: found) } }
         }
         b.start(queue: .main)
         browser = b
 
-        let rokus = await Task.detached { Self.ssdp(searchTarget: "roku:ecp", seconds: 4) }.value
+        let (host, port, seconds) = (ssdpHost, ssdpPort, ssdpSeconds)
+        let rokus = await Task.detached { Self.ssdp(searchTarget: "roku:ecp", host: host, port: port, seconds: seconds) }.value
         await withTaskGroup(of: TV?.self) { group in
             for host in rokus {
                 group.addTask { TV(name: await RokuRemote.name(host: host) ?? "Roku TV \(host)", host: host, kind: .roku) }
             }
             for await tv in group { if let tv { found(tv) } }
         }
-        try? await Task.sleep(for: .seconds(1)) // give Bonjour stragglers a moment
+        try? await Task.sleep(for: settle) // give Bonjour stragglers a moment
         b.cancel(); browser = nil
         resolving.forEach { $0.cancel() }; resolving = []
     }
@@ -55,7 +72,7 @@ public final class Discovery {
     }
 
     /// SSDP M-SEARCH over plain BSD sockets; returns hosts from LOCATION headers.
-    nonisolated static func ssdp(searchTarget: String, seconds: Int) -> [String] {
+    nonisolated static func ssdp(searchTarget: String, host: String, port: UInt16, seconds: Int) -> [String] {
         let fd = socket(AF_INET, SOCK_DGRAM, 0)
         guard fd >= 0 else { return [] }
         defer { close(fd) }
@@ -64,9 +81,9 @@ public final class Discovery {
 
         var addr = sockaddr_in()
         addr.sin_family = sa_family_t(AF_INET)
-        addr.sin_port = UInt16(1900).bigEndian
-        inet_pton(AF_INET, "239.255.255.250", &addr.sin_addr)
-        let msg = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nST: \(searchTarget)\r\nMX: 2\r\n\r\n"
+        addr.sin_port = port.bigEndian
+        inet_pton(AF_INET, host, &addr.sin_addr)
+        let msg = "M-SEARCH * HTTP/1.1\r\nHOST: \(host):\(port)\r\nMAN: \"ssdp:discover\"\r\nST: \(searchTarget)\r\nMX: 2\r\n\r\n"
         for _ in 0..<2 { // UDP: send twice
             _ = msg.withCString { p in
                 withUnsafePointer(to: &addr) {

@@ -12,9 +12,13 @@ public actor AppIconResolver {
         "Spotify": "com.spotify.client", "Max": "com.wbd.stream", "Apple TV": "com.apple.tv",
     ]
     private let cacheKey = "appIconURLs"
+    private let defaults: UserDefaults
     private var cache: [String: String]
 
-    public init() { cache = UserDefaults.standard.dictionary(forKey: "appIconURLs") as? [String: String] ?? [:] }
+    public init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        cache = defaults.dictionary(forKey: cacheKey) as? [String: String] ?? [:]
+    }
 
     public func icon(for app: TVApp) async -> URL? {
         if let icon = app.icon { return icon }
@@ -31,7 +35,7 @@ public actor AppIconResolver {
         guard let url = query.url, let (data, _) = try? await URLSession.shared.data(from: url) else { return nil }
         let found = Self.artwork(in: data)
         cache[app.name] = found?.absoluteString ?? "" // remember misses too
-        UserDefaults.standard.set(cache, forKey: cacheKey)
+        defaults.set(cache, forKey: cacheKey)
         return found
     }
 
