@@ -6,6 +6,7 @@ A native macOS menu bar remote for TCL TVs. It finds your TV on the local networ
 ![macOS 15+](https://img.shields.io/badge/macOS-15%2B-black)
 ![Swift 6 toolchain](https://img.shields.io/badge/Swift-6-orange)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 | Supported TVs | Protocol | Pairing |
 |---|---|---|
@@ -129,12 +130,21 @@ The live test pairs if needed (write the code shown on the TV to the file named 
 
 - `scripts/build.sh` builds a universal app. `VERSION=1.2.0` stamps the version; `SIGN_IDENTITY="Developer ID Application: …"` signs it with the hardened runtime (otherwise ad-hoc).
 - `scripts/make-dmg.sh` packages `build/TCLRemote-<version>.dmg`. `NOTARY_PROFILE` (from `xcrun notarytool store-credentials`) notarizes and staples it.
-- CI ([`ci.yml`](.github/workflows/ci.yml)) runs the tests with coverage and builds the app on every pull request and every push to `main`.
+- CI ([`ci.yml`](.github/workflows/ci.yml)) runs on every pull request and every push to `main`. It runs the tests, marks each failed test on the PR, writes a results summary, fails if TVKit line coverage drops below the floor (`COVERAGE_MIN`), and builds the app.
 - Pushing a tag such as `v1.1.0` runs [`release.yml`](.github/workflows/release.yml), which builds the DMG and publishes a GitHub release. It signs and notarizes when these repository secrets exist: `MACOS_CERT_P12` (base64 Developer ID `.p12`), `MACOS_CERT_PASSWORD`, `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD`.
 
 ## Contributing
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md), and please follow the [Code of Conduct](CODE_OF_CONDUCT.md). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
+This project is **open to contributions**: bug reports, ideas, docs and code are all welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and please follow the [Code of Conduct](CODE_OF_CONDUCT.md). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
+
+### Help wanted
+- **Testing on real TVs:** tell us your TCL model and whether pairing, keys, volume and apps work. It's the most useful contribution there is.
+- **Fire TV support:** a new `TVRemote` driver in TVKit plus one line in `RemoteFactory`.
+- **More app links** for the Google TV app picker (`AppCatalog`).
+- **Tests:** CI fails if TVKit line coverage drops below the floor in [`ci.yml`](.github/workflows/ci.yml), and raising it is welcome.
+- **Translations and accessibility** improvements.
+
+Look for issues labelled [`good first issue`](https://github.com/ihusnainalii/tcl-tv-remote/labels/good%20first%20issue) or [`help wanted`](https://github.com/ihusnainalii/tcl-tv-remote/labels/help%20wanted).
 
 ## Disclaimer
 

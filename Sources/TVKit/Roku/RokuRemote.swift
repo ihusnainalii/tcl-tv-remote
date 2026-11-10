@@ -33,12 +33,7 @@ public final class RokuRemote: TVRemote {
     public func apps() async -> [TVApp] {
         guard let (data, _) = try? await URLSession.shared.data(from: URL(string: base + "query/apps")!),
               let xml = String(data: data, encoding: .utf8) else { return [] }
-        let re = try! Regex(#"<app id="([^"]+)"[^>]*>([^<]+)</app>"#)
-        return xml.matches(of: re).compactMap { m in
-            guard let id = m[1].substring, let name = m[2].substring else { return nil }
-            return TVApp(id: String(id), name: String(name).replacingOccurrences(of: "&amp;", with: "&"),
-                         icon: URL(string: base + "query/icon/\(id)"))
-        }
+        return Self.parseApps(xml, base: base)
     }
 
     public func launch(_ app: TVApp) async throws { try await post("launch/\(app.id)") }
@@ -47,6 +42,22 @@ public final class RokuRemote: TVRemote {
     public static func name(host: String) async -> String? {
         guard let (data, _) = try? await URLSession.shared.data(from: URL(string: "http://\(host):8060/query/device-info")!),
               let xml = String(data: data, encoding: .utf8) else { return nil }
+        return parseName(xml)
+    }
+
+    // MARK: parsing (pure, unit-tested)
+
+    static func parseApps(_ xml: String, base: String) -> [TVApp] {
+        let re = try! Regex(#"<app id="([^"]+)"[^>]*>([^<]+)</app>"#)
+        return xml.matches(of: re).compactMap { m in
+            guard let id = m[1].substring, let name = m[2].substring else { return nil }
+            return TVApp(id: String(id), name: String(name).replacingOccurrences(of: "&amp;", with: "&"),
+                         icon: URL(string: base + "query/icon/\(id)"))
+        }
+    }
+
+    /// Prefers the name the user gave the TV, then the friendly name, then the model.
+    static func parseName(_ xml: String) -> String? {
         for tag in ["user-device-name", "friendly-device-name", "model-name"] {
             if let m = xml.firstMatch(of: try! Regex("<\(tag)>([^<]+)</\(tag)>")), let s = m[1].substring, !s.isEmpty {
                 return String(s)
