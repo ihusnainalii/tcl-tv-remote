@@ -65,9 +65,12 @@ private struct ToggleRow: View {
     let title: String
     @Binding var isOn: Bool
     var body: some View {
-        Toggle(isOn: $isOn) { Text(title).font(.callout) }
-            .toggleStyle(.switch).controlSize(.mini)
-            .padding(.vertical, 7)
+        HStack {
+            Text(title).font(.callout)
+            Spacer()
+            Toggle(title, isOn: $isOn).labelsHidden().toggleStyle(.switch).controlSize(.mini)
+        }
+        .padding(.vertical, 7)
     }
 }
 
@@ -140,8 +143,12 @@ private struct LookSettings: View {
                 }
                 .padding(.vertical, 10)
                 Divider()
-                ColorPicker(selection: customColor, supportsOpacity: false) { Text("Custom color").font(.callout) }
-                    .padding(.vertical, 6)
+                HStack {
+                    Text("Custom color").font(.callout)
+                    Spacer()
+                    ColorPicker("Custom color", selection: customColor, supportsOpacity: false).labelsHidden()
+                }
+                .padding(.vertical, 6)
             }
             Card(title: "Appearance") {
                 Picker("", selection: $mode) {
