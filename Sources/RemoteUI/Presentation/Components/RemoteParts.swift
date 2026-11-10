@@ -58,7 +58,7 @@ struct InputMenu: View {
             Button(L10n.Remote.av) { s.press(.av) }
             Button(L10n.Remote.liveTV) { s.press(.tuner) }
         } label: {
-            Image(systemName: "rectangle.on.rectangle").font(.system(size: size * 0.34, weight: .semibold))
+            Image(systemName: "cable.connector").font(.system(size: size * 0.34, weight: .semibold))
                 .frame(width: size, height: size).pill(Circle())
         }
         .menuStyle(.button).buttonStyle(PressStyle()).menuIndicator(.hidden).fixedSize()

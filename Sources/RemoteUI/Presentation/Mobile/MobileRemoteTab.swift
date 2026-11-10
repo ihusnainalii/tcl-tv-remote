@@ -89,7 +89,7 @@ private struct RemoteControls: View {
 
                 Group {
                     switch mode {
-                    case .dpad: DPad(diameter: pad).frame(maxWidth: .infinity)
+                    case .dpad: DPad(diameter: pad, homeOnLongPress: true).frame(maxWidth: .infinity)
                     case .touchpad: Touchpad().frame(height: pad)
                     }
                 }
@@ -98,7 +98,6 @@ private struct RemoteControls: View {
 
                 HStack(spacing: 10) {
                     RemoteKey(.back, "arrow.uturn.backward", size: key, iconSize: 18 * unit)
-                    RemoteKey(.home, "house.fill", size: key, iconSize: 18 * unit)
                     RemoteKey(.search, "magnifyingglass", size: key, iconSize: 18 * unit)
                     RemoteKey(.settings, "gearshape", size: key, iconSize: 18 * unit)
                 }

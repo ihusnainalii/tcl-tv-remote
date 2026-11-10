@@ -133,6 +133,8 @@ private struct RemoteKeyboardShortcuts: ViewModifier {
 struct DPad: View {
     @EnvironmentObject var s: Store
     var diameter: CGFloat = 176
+    /// Tap OK = OK, press and hold = Home (iPhone/iPad, where Home isn't in the button row).
+    var homeOnLongPress = false
     @State private var angle = 270.0
     @State private var glow = 0.0
 
@@ -157,16 +159,33 @@ struct DPad: View {
                 .offset(x: cos(a * .pi / 180) * 62 * scale, y: sin(a * .pi / 180) * 62 * scale)
             }
 
-            Button { s.press(.ok) } label: {
-                Text("OK").font(.system(size: 15 * scale, weight: .bold, design: .rounded)).foregroundStyle(.white)
-                    .frame(width: 66 * scale, height: 66 * scale).background(Theme.accent, in: Circle())
-                    .shadow(color: Theme.glow.opacity(0.45), radius: 10, y: 3)
-            }.buttonStyle(PressStyle())
+            if homeOnLongPress {
+                okFace(hint: true)
+                    .onTapGesture { s.press(.ok) }
+                    .onLongPressGesture(minimumDuration: 0.5) { s.press(.home) }
+                    .accessibilityElement()
+                    .accessibilityLabel("OK")
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction { s.press(.ok) }
+                    .accessibilityAction(named: Key.home.label) { s.press(.home) }
+            } else {
+                Button { s.press(.ok) } label: { okFace(hint: false) }.buttonStyle(PressStyle())
+            }
         }
         .frame(width: diameter, height: diameter)
     }
 
     private var scale: CGFloat { diameter / 176 }
+
+    private func okFace(hint: Bool) -> some View {
+        VStack(spacing: 2 * scale) {
+            Text("OK").font(.system(size: 15 * scale, weight: .bold, design: .rounded))
+            if hint { Image(systemName: "house.fill").font(.system(size: 9 * scale)).opacity(0.75) }
+        }
+        .foregroundStyle(.white)
+        .frame(width: 66 * scale, height: 66 * scale).background(Theme.accent, in: Circle())
+        .shadow(color: Theme.glow.opacity(0.45), radius: 10, y: 3)
+    }
 
     func press(_ k: Key, _ a: Double) {
         s.press(k)
