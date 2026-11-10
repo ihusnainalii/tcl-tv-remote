@@ -213,11 +213,11 @@ TV_HOST=192.168.1.20 swift test --filter LiveTVTests    # also test a real Googl
 
 - `scripts/build.sh` builds a universal app. `VERSION=1.2.0` stamps the version; `SIGN_IDENTITY="Developer ID Application: …"` signs it with the hardened runtime (otherwise ad-hoc).
 - `scripts/make-dmg.sh` packages `build/TCLRemote-<version>.dmg`. `NOTARY_PROFILE` (from `xcrun notarytool store-credentials`) notarizes and staples it.
-- **CI** ([`ci.yml`](.github/workflows/ci.yml)) runs on every pull request and every push to `main`:
-  - runs all tests and marks each failed test on the PR
-  - writes a results and per-file coverage summary
-  - fails if any test fails or TVKit line coverage drops below **90%**
-  - builds the app
+- **CI** ([`ci.yml`](.github/workflows/ci.yml)) runs on every pull request and every push to `main`, in stages. Each stage is a required check, so a PR can only merge once all of them pass:
+  1. **Build**: compiles the package and tests
+  2. **Tests**: runs every test, marks each failure on the PR, and writes a results summary
+  3. **Coverage**: fails if TVKit line coverage drops below **90%**, with a per-file summary
+  4. **App bundle**: builds the universal app and attaches it to the run
 - **Releases:** pushing a tag such as `v1.1.0` runs [`release.yml`](.github/workflows/release.yml), which builds the DMG and publishes a GitHub release. It signs and notarizes when these repository secrets exist: `MACOS_CERT_P12` (base64 Developer ID `.p12`), `MACOS_CERT_PASSWORD`, `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD`.
 
 ## Roadmap
