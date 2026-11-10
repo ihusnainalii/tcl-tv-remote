@@ -70,6 +70,7 @@ private struct ToggleRow: View {
             Spacer()
             Toggle(title, isOn: $isOn).labelsHidden().toggleStyle(.switch).controlSize(.mini)
         }
+        .frame(minHeight: 22)
         .padding(.vertical, 7)
     }
 }
@@ -78,11 +79,12 @@ private struct InfoRow: View {
     let title: String, value: String
     var body: some View {
         HStack {
-            Text(title).font(.caption)
+            Text(title).font(.callout)
             Spacer()
-            Text(value).font(.caption.monospaced()).foregroundStyle(.secondary)
+            Text(value).font(.callout.monospaced()).foregroundStyle(.secondary)
         }
-        .padding(.vertical, 4)
+        .frame(minHeight: 22)
+        .padding(.vertical, 7)
     }
 }
 
@@ -110,15 +112,20 @@ private struct GeneralSettings: View {
                     }
                     .labelsHidden().fixedSize()
                 }
-                .padding(.vertical, 5)
+                .frame(minHeight: 22)
+                .padding(.vertical, 7)
                 Divider()
                 ToggleRow(title: "Notifications", isOn: $notify)
             }
             Card(title: "Keyboard") {
                 InfoRow(title: "Navigate", value: "← ↑ → ↓")
+                Divider()
                 InfoRow(title: "OK · Back", value: "⏎ · esc")
+                Divider()
                 InfoRow(title: "Backspace", value: "⌫")
-                InfoRow(title: "Play/Pause · Mute · Home", value: "␣ · M · H")
+                Divider()
+                InfoRow(title: "Play · Mute · Home", value: "␣ · M · H")
+                Divider()
                 InfoRow(title: "Volume", value: "+ / −")
             }
         }
@@ -148,7 +155,8 @@ private struct LookSettings: View {
                     Spacer()
                     ColorPicker("Custom color", selection: customColor, supportsOpacity: false).labelsHidden()
                 }
-                .padding(.vertical, 6)
+                .frame(minHeight: 22)
+                .padding(.vertical, 7)
             }
             Card(title: "Appearance") {
                 Picker("", selection: $mode) {
