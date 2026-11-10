@@ -45,9 +45,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             self?.statusItem.button?.image = NSImage(systemSymbolName: name, accessibilityDescription: "TCL Remote")
         }
 
-        // Testing aid: open the panel on its Settings screen.
-        if CommandLine.arguments.contains("--settings") {
-            store.showSettings()
+        // Testing and screenshot aid: open the panel at launch, optionally on a given screen.
+        let args = CommandLine.arguments
+        if args.contains("--settings") { store.showSettings() }
+        if args.contains("--devices") { store.showDevices() }
+        if !Set(args).isDisjoint(with: ["--open", "--settings", "--devices"]) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self.toggle() }
         }
     }
