@@ -1,5 +1,7 @@
-import AppKit
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 import TVKit
 
 /// Live volume from Google TV. Drag it, or swipe two fingers on the trackpad over it.
@@ -41,7 +43,9 @@ struct VolumeBar: View {
                         s.setVolume(Int((v.location.x / g.size.width * CGFloat(volume.max)).rounded()))
                     }
                     .onEnded { _ in dragging = false })
+                #if os(macOS)
                 .overlay(ScrollCatcher { s.nudgeVolume($0) })
+                #endif
             }
             .frame(height: 20)
             .onHover { hover = $0 }
@@ -60,6 +64,7 @@ struct VolumeBar: View {
     }
 }
 
+#if os(macOS)
 /// Turns trackpad / mouse-wheel scrolling over the bar into volume steps.
 private struct ScrollCatcher: NSViewRepresentable {
     let onStep: (Int) -> Void
@@ -87,3 +92,4 @@ private struct ScrollCatcher: NSViewRepresentable {
         }
     }
 }
+#endif

@@ -1,16 +1,15 @@
-import AppKit
 import SwiftUI
 import TVKit
 
 /// Presentation state for the panel. Coordinates TVKit (drivers, library, discovery) and the
 /// system services; the rules themselves live in TVKit and are unit-tested there.
 @MainActor
-final class Store: ObservableObject {
+public final class Store: ObservableObject {
     enum Screen: Equatable { case devices, pairing, remote, settings }
-    enum Link: Equatable { case idle, connecting, connected, needsPairing, failed }
+    public enum Link: Equatable { case idle, connecting, connected, needsPairing, failed }
 
     @Published private(set) var screen: Screen = .devices
-    @Published private(set) var link: Link = .idle
+    @Published public private(set) var link: Link = .idle
     @Published private(set) var tv: TV?
     @Published private(set) var library: TVLibrary
     @Published private(set) var found: [TV] = []
@@ -32,7 +31,7 @@ final class Store: ObservableObject {
     private var lastVolumeChange = Date.distantPast
     private var commandChain: Task<Void, Never>?
 
-    init(repository: TVRepository = UserDefaultsTVRepository()) {
+    public init(repository: TVRepository = UserDefaultsTVRepository()) {
         self.repository = repository
         library = TVLibrary(repository.load())
         SystemNotifications.requestAccess()
@@ -77,8 +76,8 @@ final class Store: ObservableObject {
         withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { found.append(tv) }
     }
 
-    func showDevices() { go(.devices); scan() }
-    func showSettings() { go(.settings) }
+    public func showDevices() { go(.devices); scan() }
+    public func showSettings() { go(.settings) }
     func closeSettings() { go(tv == nil ? .devices : .remote) }
 
     // MARK: connection
@@ -214,7 +213,7 @@ final class Store: ObservableObject {
     // MARK: commands
 
     func press(_ key: Key) {
-        NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
+        Haptics.tap()
         run { try await $0.press(key) }
     }
 

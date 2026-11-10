@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 import TVKit
 
@@ -110,8 +109,10 @@ private struct GeneralSettings: View {
     var body: some View {
         VStack(spacing: 14) {
             Card(title: L10n.Settings.startup) {
-                ToggleRow(title: L10n.Settings.launchAtLogin, isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
-                Divider()
+                if PlatformInfo.isMac {
+                    ToggleRow(title: L10n.Settings.launchAtLogin, isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
+                    Divider()
+                }
                 ToggleRow(title: L10n.Settings.connectAutomatically, isOn: $autoConnect)
             }
             Card(title: L10n.Settings.connection) {
@@ -149,8 +150,8 @@ private struct LookSettings: View {
     @AppStorage(AppearanceMode.key) private var mode = AppearanceMode.system.rawValue
 
     private var customColor: Binding<Color> {
-        Binding(get: { Color(nsColor: AccentStyle.customColor) },
-                set: { customHex = NSColor($0).hex; style = AccentStyle.custom.rawValue })
+        Binding(get: { Color(platform: AccentStyle.customColor) },
+                set: { customHex = PlatformColor($0).hex; style = AccentStyle.custom.rawValue })
     }
 
     var body: some View {
@@ -255,6 +256,7 @@ private struct TVSettings: View {
 }
 
 private struct AboutSettings: View {
+    @Environment(\.openURL) private var openURL
     var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev" }
     @State private var update: UpdateCheck.Result?
     @State private var checking = false
@@ -273,12 +275,20 @@ private struct AboutSettings: View {
                 .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
+            // Mac builds update from GitHub releases; iOS updates come from the App Store.
+            if PlatformInfo.isMac { updateCheck }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.bottom, 8)
+    }
+
+    private var updateCheck: some View {
             Group {
                 switch update {
                 case .available(let v, let url)?:
                     VStack(spacing: 6) {
                         Text(L10n.About.updateAvailable(v)).font(.callout.weight(.medium))
-                        Button(L10n.About.download) { NSWorkspace.shared.open(url) }.buttonStyle(.borderedProminent)
+                        Button(L10n.About.download) { openURL(url) }.buttonStyle(.borderedProminent)
                     }
                 case .upToDate?: Label(L10n.About.upToDate, systemImage: "checkmark.circle.fill").foregroundStyle(.green)
                 case .failed(let msg)?: Text(msg).font(.caption).foregroundStyle(.secondary)
@@ -292,8 +302,5 @@ private struct AboutSettings: View {
             }
             .padding(.top, 4)
             .animation(.spring, value: update)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.bottom, 8)
     }
 }

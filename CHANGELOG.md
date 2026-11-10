@@ -5,6 +5,8 @@ All notable changes to this project are listed here. The format follows [Keep a 
 ## [Unreleased]
 
 ### Added
+- iPhone and iPad app sharing all screens and logic with the Mac app (new `RemoteUI` module; `iOS/` XcodeGen project). Native X.509 certificate generation for pairing on iOS. CI builds the iOS app.
+- Fixed the power button's glow being clipped at the panel edge.
 - SwiftLint (strict) and SwiftGen. All UI text moved to `Localizable.strings` with a generated `L10n` API, ready for translations. CI gains a Lint stage.
 
 ## [1.1.0] - 2026-11-10

@@ -1,5 +1,7 @@
 import Foundation
+#if os(macOS)
 import ServiceManagement
+#endif
 import UserNotifications
 
 /// macOS notifications, respecting the Settings toggle.
@@ -20,11 +22,17 @@ enum SystemNotifications {
     }
 }
 
+/// Launch at login (Mac only; iOS has no equivalent).
 enum LoginItem {
+    #if os(macOS)
     static var isEnabled: Bool { SMAppService.mainApp.status == .enabled }
     static func set(_ on: Bool) throws {
         if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
     }
+    #else
+    static var isEnabled: Bool { false }
+    static func set(_ on: Bool) throws {}
+    #endif
 }
 
 /// User preferences (written by the Settings window via @AppStorage with the same keys).

@@ -3,13 +3,36 @@ import TVKit
 
 // MARK: - Root
 
-struct RootView: View {
+/// The whole remote UI. `.panel` is the Mac menu bar popover; `.fullScreen` is iPhone and iPad.
+public struct RootView: View {
+    public enum Style { case panel, fullScreen }
+
     @EnvironmentObject var s: Store
+    let style: Style
+
+    public init(style: Style = .panel) { self.style = style }
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func slide(_ edge: Edge) -> AnyTransition { reduceMotion ? .opacity : .push(from: edge) }
 
-    var body: some View {
+    public var body: some View {
+        switch style {
+        case .panel:
+            content
+                .frame(width: 300)
+                .fixedSize(horizontal: false, vertical: true) // popover sizes itself to this ideal height
+                .themed()
+        case .fullScreen:
+            ScrollView {
+                content.frame(maxWidth: 440).frame(maxWidth: .infinity) // centered column on iPad
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .background(.background.secondary)
+            .themed()
+        }
+    }
+
+    private var content: some View {
         VStack(spacing: 14) {
             Header()
             ZStack {
@@ -21,12 +44,10 @@ struct RootView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .clipped()
+            // Clip slide transitions, but leave room for button glows near the edges.
+            .clipShape(Rectangle().inset(by: -14))
         }
         .padding(16)
-        .frame(width: 300)
-        .fixedSize(horizontal: false, vertical: true) // popover sizes itself to this ideal height
-        .themed()
         .overlay(alignment: .bottom) {
             if let t = s.toast {
                 Text(t)
@@ -76,11 +97,15 @@ struct Header: View {
                 Button { s.select(s.tv!) } label: { icon("appletvremote.gen4") }.buttonStyle(PressStyle()).help(L10n.Header.remote)
             }
             Menu {
+                #if os(macOS)
                 Toggle(L10n.Menu.launchAtLogin, isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
+                #endif
                 Button(L10n.Menu.findTVs) { s.showDevices() }
                 Button(L10n.Menu.settings) { s.showSettings() }.keyboardShortcut(",")
+                #if os(macOS)
                 Divider()
-                Button(L10n.Menu.quit) { NSApp.terminate(nil) }.keyboardShortcut("q")
+                Button(L10n.Menu.quit) { NSApplication.shared.terminate(nil) }.keyboardShortcut("q")
+                #endif
             } label: { icon("ellipsis") }
             .menuStyle(.button).buttonStyle(PressStyle()).menuIndicator(.hidden).fixedSize()
             .accessibilityLabel(L10n.Header.moreOptions)

@@ -12,10 +12,46 @@ public enum ClientIdentity {
     private static let pass = "tclremote"
     private static var cached: SecIdentity?
 
+    /// Forgets the in-memory copy only (tests use it to exercise the Keychain read path).
+    static func dropCache() { cached = nil }
+
+    /// Keychain reads can block on a macOS permission prompt, so never do them on the main thread.
+    static func loadOffMain() async throws -> SecIdentity {
+        try await Task.detached(priority: .userInitiated) { try load() }.value
+    }
+
+    static func load() throws -> SecIdentity {
+        if let cached { return cached }
+        let id = try loadOrCreate()
+        cached = id
+        return id
+    }
+
+#if os(macOS)
+    // macOS: a PKCS#12 blob (made with the system's LibreSSL) stored as a Keychain item and
+    // imported in memory, so it works for ad-hoc signed builds without Keychain entitlements.
+
     private static var keychainQuery: [String: Any] {
         [kSecClass as String: kSecClassGenericPassword,
          kSecAttrService as String: service,
          kSecAttrAccount as String: "client-identity"]
+    }
+
+    /// Deletes the certificate; every Google TV must be paired again afterwards.
+    public static func reset() {
+        SecItemDelete(keychainQuery as CFDictionary)
+        cached = nil
+    }
+
+    private static func loadOrCreate() throws -> SecIdentity {
+        let data = try p12Data()
+        let opts: [String: Any] = [kSecImportExportPassphrase as String: pass, kSecImportToMemoryOnly as String: true]
+        var items: CFArray?
+        let status = SecPKCS12Import(data as CFData, opts as CFDictionary, &items)
+        guard status == errSecSuccess, let first = (items as? [[String: Any]])?.first,
+              let value = first[kSecImportItemIdentity as String] else { throw TVError.identity("import \(status)") }
+        // SecIdentity is a CF type, so a conditional cast can't be written; this always succeeds.
+        return value as! SecIdentity // swiftlint:disable:this force_cast
     }
 
     /// The PKCS#12 blob lives in the Keychain; the on-disk copy is only used to migrate older installs.
@@ -43,35 +79,7 @@ public enum ClientIdentity {
         return data
     }
 
-    /// Deletes the certificate; every Google TV must be paired again afterwards.
-    public static func reset() {
-        SecItemDelete(keychainQuery as CFDictionary)
-        cached = nil
-    }
-
-    /// Forgets the in-memory copy only (tests use it to exercise the Keychain read path).
-    static func dropCache() { cached = nil }
-
-    /// Keychain reads can block on a macOS permission prompt, so never do them on the main thread.
-    static func loadOffMain() async throws -> SecIdentity {
-        try await Task.detached(priority: .userInitiated) { try load() }.value
-    }
-
-    static func load() throws -> SecIdentity {
-        if let cached { return cached }
-        let data = try p12Data()
-        let opts: [String: Any] = [kSecImportExportPassphrase as String: pass, kSecImportToMemoryOnly as String: true]
-        var items: CFArray?
-        let status = SecPKCS12Import(data as CFData, opts as CFDictionary, &items)
-        guard status == errSecSuccess, let first = (items as? [[String: Any]])?.first,
-              let value = first[kSecImportItemIdentity as String] else { throw TVError.identity("import \(status)") }
-        // SecIdentity is a CF type, so a conditional cast can't be written; this always succeeds.
-        let id = value as! SecIdentity // swiftlint:disable:this force_cast
-        cached = id
-        return id
-    }
-
-    // ponytail: shells out to the system LibreSSL instead of hand-writing X.509 DER.
+    // ponytail: shells out to the system LibreSSL on macOS; iOS uses the native X509 builder.
     static func generate(in tmp: URL) throws -> Data {
         try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
@@ -93,6 +101,57 @@ public enum ClientIdentity {
         try p.run(); p.waitUntilExit()
         guard p.terminationStatus == 0 else { throw TVError.identity("openssl \(args[0]) failed") }
     }
+#else
+    // iOS / iPadOS: a permanent RSA key plus a natively built certificate in the Keychain;
+    // the system pairs them into an identity.
+
+    private static var keyTag: Data { Data("\(service).client-key".utf8) }
+
+    public static func reset() {
+        SecItemDelete([kSecClass as String: kSecClassCertificate, kSecAttrLabel as String: service] as CFDictionary)
+        SecItemDelete([kSecClass as String: kSecClassKey, kSecAttrApplicationTag as String: keyTag] as CFDictionary)
+        cached = nil
+    }
+
+    private static func loadOrCreate() throws -> SecIdentity {
+        if let id = findIdentity() { return id }
+        reset() // clear any half-written key or certificate
+        var error: Unmanaged<CFError>?
+        let attrs: [String: Any] = [
+            kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
+            kSecAttrKeySizeInBits as String: 2048,
+            kSecPrivateKeyAttrs as String: [kSecAttrIsPermanent as String: true,
+                                            kSecAttrApplicationTag as String: keyTag,
+                                            kSecAttrLabel as String: service],
+        ]
+        guard let privateKey = SecKeyCreateRandomKey(attrs as CFDictionary, &error),
+              let publicKey = SecKeyCopyPublicKey(privateKey),
+              let pkcs1 = SecKeyCopyExternalRepresentation(publicKey, &error) as Data? else {
+            throw TVError.identity("key generation")
+        }
+        let der = try X509.selfSigned(commonName: "atvremote", publicKeyPKCS1: pkcs1) { tbs in
+            guard let sig = SecKeyCreateSignature(privateKey, .rsaSignatureMessagePKCS1v15SHA256, tbs as CFData, &error)
+            else { throw TVError.identity("signing") }
+            return sig as Data
+        }
+        guard let cert = SecCertificateCreateWithData(nil, der as CFData) else { throw TVError.identity("certificate") }
+        let add: [String: Any] = [kSecClass as String: kSecClassCertificate, kSecValueRef as String: cert,
+                                  kSecAttrLabel as String: service]
+        let status = SecItemAdd(add as CFDictionary, nil)
+        guard status == errSecSuccess || status == errSecDuplicateItem, let id = findIdentity() else {
+            throw TVError.identity("keychain \(status)")
+        }
+        return id
+    }
+
+    private static func findIdentity() -> SecIdentity? {
+        let q: [String: Any] = [kSecClass as String: kSecClassIdentity, kSecAttrLabel as String: service,
+                                kSecReturnRef as String: true]
+        var out: CFTypeRef?
+        guard SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess, let out else { return nil }
+        return (out as! SecIdentity) // swiftlint:disable:this force_cast
+    }
+#endif
 }
 
 /// RSA public key -> (modulus, exponent) with DER leading zeros stripped.

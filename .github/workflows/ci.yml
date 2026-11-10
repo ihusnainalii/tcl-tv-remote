@@ -3,6 +3,7 @@ name: CI
 # Staged pipeline. Each job is a required check on main, so a PR merges only when all pass:
 #   Lint -> Build -> Tests -> Coverage
 #                         -> App bundle
+#                         -> iOS app
 
 on:
   pull_request:
@@ -32,8 +33,8 @@ jobs:
       - name: SwiftGen output is up to date
         run: |
           swiftgen config run
-          git diff --exit-code -- Sources/TCLRemote/Generated || {
-            echo "::error title=SwiftGen out of date::Run 'swiftgen' and commit Sources/TCLRemote/Generated"; exit 1; }
+          git diff --exit-code -- Sources/RemoteUI/Generated || {
+            echo "::error title=SwiftGen out of date::Run 'swiftgen' and commit Sources/RemoteUI/Generated"; exit 1; }
 
   build:
     name: Build
@@ -91,6 +92,24 @@ jobs:
           name: coverage
       - name: Coverage gate
         run: python3 scripts/ci_report.py coverage coverage.json --min "$COVERAGE_MIN"
+
+  ios:
+    name: iOS app
+    needs: test
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: command -v xcodegen >/dev/null || brew install xcodegen
+      - name: Generate project
+        run: cd iOS && xcodegen generate
+      - name: Build for iPhone and iPad (Simulator)
+        run: |
+          cd iOS
+          xcodebuild -project TCLRemoteiOS.xcodeproj -scheme TCLRemoteiOS \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath ../.build/ios \
+            CODE_SIGNING_ALLOWED=NO -quiet build
 
   app:
     name: App bundle

@@ -3,7 +3,7 @@
 <h1 align="center">TCL Remote for Mac</h1>
 
 <p align="center">
-A native macOS menu bar remote for TCL TVs.<br>
+A native remote for TCL TVs: a macOS menu bar app, plus an iPhone and iPad app.<br>
 It finds your TV on the local network, pairs once, remembers it, and reconnects on its own,<br>
 so your keyboard and trackpad become the remote.
 </p>
@@ -25,6 +25,7 @@ so your keyboard and trackpad become the remote.
 
 ## Contents
 - [Supported TVs](#supported-tvs)
+- [iPhone and iPad](#iphone-and-ipad)
 - [Features](#features)
 - [Screenshots](#screenshots)
 - [Install](#install)
@@ -49,6 +50,25 @@ so your keyboard and trackpad become the remote.
 | **Roku TV** | Roku External Control Protocol (HTTP, port 8060) | None |
 
 Fire TV editions aren't supported yet (see the [Roadmap](#roadmap)). Tested on a TCL Google TV. If you've tried another model, please [let us know](https://github.com/ihusnainalii/tcl-tv-remote/issues/new/choose).
+
+## iPhone and iPad
+
+The same remote runs on iPhone and iPad, sharing every screen, rule and protocol driver with the Mac app.
+
+<p align="center"><img src="docs/screenshots/iphone.png" width="260" alt="TCL Remote on iPhone"></p>
+
+```bash
+brew install xcodegen
+cd iOS && xcodegen        # generates TCLRemoteiOS.xcodeproj from project.yml
+open TCLRemoteiOS.xcodeproj
+```
+
+Run the `TCLRemoteiOS` scheme on a simulator. To run on a device, set your team in Xcode (or `DEVELOPMENT_TEAM` in `iOS/project.yml`).
+
+**Differences from the Mac app:**
+- No launch at login, quit or update check. iOS apps update through the App Store.
+- The pairing certificate is created natively and kept in the iOS Keychain.
+- Discovering Roku TVs on a real iPhone needs Apple's multicast networking entitlement. Until that's granted, use **Add by IP** for Roku. Google TV discovery works without it.
 
 ## Features
 
@@ -173,7 +193,7 @@ To report a vulnerability privately, see [SECURITY.md](SECURITY.md).
 
 ## Architecture
 
-The code is split into two modules, and dependencies only point one way: the app depends on `TVKit`, never the reverse.
+The code is split into layers, and dependencies only point one way: the app shells depend on `RemoteUI`, `RemoteUI` depends on `TVKit`, and `TVKit` depends on nothing but Apple frameworks. TVKit and RemoteUI build for macOS, iOS and iPadOS.
 
 ```
 Sources/
@@ -185,11 +205,13 @@ Sources/
     Persistence/TVRepository   storage interface + UserDefaults implementation
     AndroidTV/  Roku/          protocol drivers (the only platform-specific code)
     Discovery/  Apps/  Updates/
-  TCLRemote/                   menu bar app
-    App/                       entry point, status item + popover
+  RemoteUI/                    shared SwiftUI UI for macOS, iOS and iPadOS
     State/AppStore             presentation state; coordinates TVKit and system services
-    Services/                  connectivity monitor, notifications, login item, preferences
+    Services/                  connectivity monitor, notifications, login item, preferences, platform shims
     Presentation/              SwiftUI screens and components
+    Resources/ + Generated/    Localizable.strings and SwiftGen's L10n
+  TCLRemote/App/               Mac menu bar shell: status item + popover
+iOS/                           iPhone/iPad shell (XcodeGen project.yml + App/)
 Tests/TVKitTests/              unit tests, fake TVs on localhost, opt-in live-TV test
 ```
 
@@ -221,7 +243,8 @@ TV_HOST=192.168.1.20 swift test --filter LiveTVTests    # also test a real Googl
   2. **Build**: compiles the package and tests
   3. **Tests**: runs every test, marks each failure on the PR, and writes a results summary
   4. **Coverage**: fails if TVKit line coverage drops below **90%**, with a per-file summary
-  5. **App bundle**: builds the universal app and attaches it to the run
+  5. **App bundle**: builds the universal Mac app and attaches it to the run
+  6. **iOS app**: generates the Xcode project and builds the iPhone/iPad app
 - **Releases:** pushing a tag such as `v1.1.0` runs [`release.yml`](.github/workflows/release.yml), which builds the DMG and publishes a GitHub release. It signs and notarizes when these repository secrets exist: `MACOS_CERT_P12` (base64 Developer ID `.p12`), `MACOS_CERT_PASSWORD`, `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD`.
 
 ## Roadmap

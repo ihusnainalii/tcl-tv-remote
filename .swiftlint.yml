@@ -2,10 +2,11 @@
 included:
   - Sources
   - Tests
+  - iOS/App
   - Package.swift
 excluded:
   - .build
-  - Sources/TCLRemote/Generated   # SwiftGen output
+  - Sources/RemoteUI/Generated   # SwiftGen output
 
 opt_in_rules:
   - empty_count
