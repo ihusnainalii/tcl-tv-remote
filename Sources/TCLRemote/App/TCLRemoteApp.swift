@@ -1,3 +1,7 @@
+// The Mac menu bar app. Only macOS has AppKit and menu bar extras; when Xcode builds the package for
+// iOS or watchOS (e.g. the TCLRemote-Package scheme with an iPhone selected) this target compiles to a
+// placeholder. The iPhone, iPad and Apple Watch apps live in iOS/ (open TCLRemoteiOS.xcodeproj).
+#if os(macOS)
 import AppKit
 import Combine
 import RemoteUI
@@ -67,3 +71,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     func popoverDidClose(_ notification: Notification) { statusItem.button?.highlight(false) }
 }
+#else
+@main
+enum TCLRemoteMacOnly {
+    static func main() {
+        print("TCL Remote's menu bar app runs on macOS. For iPhone, iPad and Apple Watch, open iOS/TCLRemoteiOS.xcodeproj.")
+    }
+}
+#endif
