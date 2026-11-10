@@ -6,8 +6,6 @@ struct AppsGrid: View {
     @State private var shown = false
     @State private var query = ""
     @State private var adding = false
-    @State private var newName = ""
-    @State private var newID = ""
 
     var apps: [TVApp] {
         query.isEmpty ? s.displayedApps : s.displayedApps.filter { $0.name.localizedCaseInsensitiveContains(query) }
@@ -32,7 +30,7 @@ struct AppsGrid: View {
                                 .scaleEffect(shown ? 1 : 0.6).opacity(shown ? 1 : 0)
                                 .animation(.spring(response: 0.45, dampingFraction: 0.7).delay(Double(min(i, 12)) * 0.03), value: shown)
                         }
-                        if query.isEmpty { addTile }
+                        if query.isEmpty, s.tv?.kind != .roku { addTile } // Roku already lists every installed app
                     }
                     .animation(.spring(response: 0.4, dampingFraction: 0.8), value: apps)
                 }
@@ -71,29 +69,13 @@ struct AppsGrid: View {
                     .frame(width: 38, height: 38)
                     .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [3])))
                     .foregroundStyle(.secondary)
-                Text("Shortcut").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+                Text("Add").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, minHeight: 68, maxHeight: 68)
         }
         .buttonStyle(PressStyle())
-        .accessibilityLabel("Add app shortcut")
-        .popover(isPresented: $adding, arrowEdge: .bottom) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("New shortcut").font(.headline)
-                TextField("Name", text: $newName)
-                TextField(s.tv?.kind == .roku ? "Roku app ID, e.g. 12" : "App link, e.g. https://www.twitch.tv", text: $newID)
-                HStack {
-                    Spacer()
-                    Button("Cancel") { adding = false }
-                    Button("Add") {
-                        s.addCustomApp(name: newName, id: newID)
-                        newName = ""; newID = ""; adding = false
-                    }
-                    .buttonStyle(.borderedProminent).disabled(newName.isEmpty || newID.isEmpty)
-                }
-            }
-            .textFieldStyle(.roundedBorder).padding(14).frame(width: 260)
-        }
+        .accessibilityLabel("Add an app")
+        .popover(isPresented: $adding, arrowEdge: .bottom) { AppPicker().environmentObject(s) }
     }
 
     func tint(_ name: String) -> Color {
@@ -127,5 +109,78 @@ struct AppIcon: View {
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Theme.stroke, lineWidth: 0.5))
         .task(id: app.id) { url = await AppIconResolver.shared.icon(for: app) }
+    }
+}
+
+/// Pick apps to add. Google TV can't list installed apps, so this offers a catalogue of popular
+/// TV apps, plus a custom link for anything else.
+struct AppPicker: View {
+    @EnvironmentObject var s: Store
+    @State private var query = ""
+    @State private var showCustom = false
+    @State private var name = ""
+    @State private var link = ""
+
+    var candidates: [TVApp] {
+        AppCatalog.googleTV.filter { a in
+            !s.displayedApps.contains { $0.id == a.id } && (query.isEmpty || a.name.localizedCaseInsensitiveContains(query))
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Add apps").font(.headline)
+            Text("Google TV doesn't share its installed apps, so pick the ones you have. Apps that aren't installed won't open.")
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass").font(.caption).foregroundStyle(.secondary)
+                TextField("Search apps", text: $query).textFieldStyle(.plain).font(.callout)
+            }
+            .padding(7).pill(RoundedRectangle(cornerRadius: 8))
+
+            if candidates.isEmpty {
+                Text(query.isEmpty ? "All of these apps are already added." : "No match. Add it with a custom link below.")
+                    .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 60)
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4), spacing: 6) {
+                        ForEach(candidates) { app in
+                            Button { withAnimation(.spring) { s.addCustomApp(name: app.name, id: app.id) } } label: {
+                                VStack(spacing: 4) {
+                                    AppIcon(app: app, tint: .gray)
+                                    Text(app.name).font(.system(size: 9, weight: .medium)).lineLimit(1)
+                                }
+                                .frame(maxWidth: .infinity).padding(.vertical, 4)
+                            }
+                            .buttonStyle(PressStyle())
+                            .help("Add \(app.name)")
+                            .transition(.scale.combined(with: .opacity))
+                        }
+                    }
+                }
+                .scrollIndicators(.never)
+                .frame(height: 210)
+            }
+
+            DisclosureGroup("Custom link", isExpanded: $showCustom) {
+                VStack(spacing: 6) {
+                    TextField("Name", text: $name)
+                    TextField("App link, e.g. https://www.twitch.tv", text: $link)
+                    HStack {
+                        Spacer()
+                        Button("Add") {
+                            s.addCustomApp(name: name, id: link)
+                            name = ""; link = ""
+                        }
+                        .buttonStyle(.borderedProminent).disabled(name.isEmpty || link.isEmpty)
+                    }
+                }
+                .textFieldStyle(.roundedBorder).padding(.top, 6)
+            }
+            .font(.callout)
+        }
+        .padding(14)
+        .frame(width: 300)
     }
 }

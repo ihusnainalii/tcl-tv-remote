@@ -29,7 +29,7 @@ Fire TV editions aren't supported yet.
 - Play/pause, stop, rewind, fast-forward, previous, next
 - HDMI 1–4, AV and Live TV inputs, plus a 0–9 keypad
 - **Type** tab: a live keyboard for the TV's search and text boxes, with Return sending Enter
-- App launcher with real app icons; favorite apps, recent apps, custom shortcuts and search
+- App launcher with real app icons; favorite and recent apps, search, and a picker of popular TV apps for Google TV (it can't report installed apps) plus custom links
 
 **Mac integration**
 - Menu bar panel that resizes to its content, plus keyboard control (arrows, Return, Esc, Delete, Space, `+`/`−`, `M`, `H`)

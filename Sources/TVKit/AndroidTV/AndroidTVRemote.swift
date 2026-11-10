@@ -133,12 +133,7 @@ public final class AndroidTVRemote: TVRemote, PairingCapable, StateReporting {
         return symbols[ch]
     }
 
-    public func apps() async -> [TVApp] {
-        [("YouTube", "https://www.youtube.com"), ("Netflix", "https://www.netflix.com/title"),
-         ("Prime Video", "https://app.primevideo.com"), ("Disney+", "https://www.disneyplus.com"),
-         ("Spotify", "spotify://"), ("Max", "https://play.max.com"),
-         ("Apple TV", "https://tv.apple.com")].map { TVApp(id: $0.1, name: $0.0) }
-    }
+    public func apps() async -> [TVApp] { AppCatalog.featured }
 
     public func launch(_ app: TVApp) async throws {
         try await send(PB.build { $0.msg(90) { $0.string(1, app.id) } })
