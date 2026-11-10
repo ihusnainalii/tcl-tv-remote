@@ -96,7 +96,7 @@ struct AppIcon: View {
     var body: some View {
         AsyncImage(url: url, transaction: Transaction(animation: .easeOut(duration: 0.25))) { phase in
             if let image = phase.image {
-                image.resizable().interpolation(.high).aspectRatio(contentMode: .fill)
+                image.resizable().interpolation(.high).scaledToFill()
                     .transition(.opacity.combined(with: .scale(scale: 0.9)))
             } else {
                 Text(String(app.name.prefix(1)))
