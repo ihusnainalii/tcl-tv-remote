@@ -15,14 +15,19 @@ enum Theme {
 
 /// Squishy press + hover lift used by every control.
 struct PressStyle: ButtonStyle {
-    func makeBody(configuration c: Configuration) -> some View { Pressable(c: c) }
+    var hoverScale: CGFloat = 1.04
+    var pressScale: CGFloat = 0.88
+
+    func makeBody(configuration c: Configuration) -> some View { Pressable(c: c, hoverScale: hoverScale, pressScale: pressScale) }
 
     private struct Pressable: View {
         let c: Configuration
+        let hoverScale: CGFloat
+        let pressScale: CGFloat
         @State private var hover = false
         var body: some View {
             c.label
-                .scaleEffect(c.isPressed ? 0.88 : hover ? 1.04 : 1)
+                .scaleEffect(c.isPressed ? pressScale : hover ? hoverScale : 1)
                 .brightness(c.isPressed ? 0.12 : hover ? 0.04 : 0)
                 .animation(Theme.spring, value: c.isPressed)
                 .animation(.easeOut(duration: 0.15), value: hover)

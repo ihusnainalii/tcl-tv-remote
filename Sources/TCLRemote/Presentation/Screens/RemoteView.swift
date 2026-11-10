@@ -13,7 +13,6 @@ struct RemoteView: View {
     enum Tab: String, CaseIterable { case apps = "Apps", keypad = "Keypad", type = "Type", more = "More" }
 
     var body: some View {
-        ScrollView {
         VStack(spacing: 14) {
             banner
 
@@ -65,10 +64,6 @@ struct RemoteView: View {
 
             tabs
         }
-        .padding(.bottom, 4)
-        }
-        .scrollIndicators(.never)
-        .scrollBounceBehavior(.basedOnSize)
         .disabled(s.link == .needsPairing)
         .focusable()
         .focusEffectDisabled()

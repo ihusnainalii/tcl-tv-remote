@@ -15,7 +15,7 @@ struct DevicesView: View {
         VStack(spacing: 12) {
             if s.scanning { Radar().frame(height: 90).transition(.scale.combined(with: .opacity)) }
 
-            ScrollView {
+            FitScroll(maxHeight: 380) {
                 VStack(alignment: .leading, spacing: 6) {
                     if !s.known.isEmpty {
                         section("Recent")
@@ -49,8 +49,6 @@ struct DevicesView: View {
                     }
                 }
             }
-            .frame(maxHeight: .infinity)
-            .scrollIndicators(.never)
 
             if showManual {
                 VStack(spacing: 8) {
@@ -130,7 +128,7 @@ struct DeviceRow: View {
             .contentShape(Rectangle())
             .pill(RoundedRectangle(cornerRadius: 12))
         }
-        .buttonStyle(PressStyle())
+        .buttonStyle(PressStyle(hoverScale: 1, pressScale: 0.97)) // full-width rows: highlight, don't grow
     }
 }
 

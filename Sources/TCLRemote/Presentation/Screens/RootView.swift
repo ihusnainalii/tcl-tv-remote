@@ -7,6 +7,8 @@ struct RootView: View {
     @EnvironmentObject var s: Store
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    @State private var panelSize: CGSize = .zero
+
     func slide(_ edge: Edge) -> AnyTransition { reduceMotion ? .opacity : .push(from: edge) }
 
     var body: some View {
@@ -19,12 +21,15 @@ struct RootView: View {
                 case .remote: RemoteView().transition(slide(.trailing))
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .frame(maxWidth: .infinity)
             .clipped()
         }
         .padding(16)
-        // MenuBarExtra windows don't resize while open, so the panel keeps one size and scrolls inside.
-        .frame(width: 300, height: 700)
+        .frame(width: 300)
+        .fixedSize(horizontal: false, vertical: true)
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { panelSize = $0 }
+        .background(PanelSizer(size: panelSize))
+        .frame(maxHeight: .infinity, alignment: .top)
         .overlay(alignment: .bottom) {
             if let t = s.toast {
                 Text(t)

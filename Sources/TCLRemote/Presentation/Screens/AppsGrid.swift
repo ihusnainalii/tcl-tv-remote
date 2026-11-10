@@ -25,7 +25,7 @@ struct AppsGrid: View {
             if s.link != .connected && s.displayedApps.isEmpty {
                 Text("Connect to see apps").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 60)
             } else {
-                ScrollView {
+                FitScroll(maxHeight: 190) {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
                         ForEach(Array(apps.enumerated()), id: \.element.id) { i, app in
                             tile(app)
@@ -36,7 +36,6 @@ struct AppsGrid: View {
                     }
                     .animation(.spring(response: 0.4, dampingFraction: 0.8), value: apps)
                 }
-                .frame(maxHeight: 170)
             }
         }
         .onAppear { shown = true }

@@ -59,7 +59,6 @@ struct PairingView: View {
             }
         }
         .padding(.vertical, 8)
-        .frame(maxHeight: .infinity)
         .onAppear { focused = true }
     }
 }
