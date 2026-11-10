@@ -24,21 +24,28 @@ open "build/TCL Remote.app"   # or scripts/make-dmg.sh for an installer
 Requires macOS 15+ and Xcode. Allow **Local Network** access when macOS asks.
 
 ## Architecture
+Two modules with a one-way dependency: the app depends on TVKit, never the reverse.
+
 ```
 Sources/
-  TVKit/                     core library: no UI, unit-tested
-    Domain/                  TV, KnownTV, TVApp, Key, TVError, TVRemote protocol, SavedTVs
-    AndroidTV/               Remote v2: protobuf, TLS connection, pairing crypto, remote
-    Roku/                    ECP remote
-    Discovery/               Bonjour + SSDP
-    Updates/                 GitHub release check
-  TCLRemote/                 menu bar app
-    App/                     @main scene
-    State/                   AppStore: connection lifecycle, saved TVs, notifications
-    Presentation/            SwiftUI screens and components
-Tests/TVKitTests/
+  TVKit/                       core: no UI, unit-tested
+    Domain/                    TV, KnownTV, TVApp, Key, TVError
+                               TVRemote + capabilities (PairingCapable, StateReporting), RemoteFactory
+    Library/TVLibrary          saved-TV and app rules (favorites, renames, recents, ordering, IP moves)
+    Control/VolumeStepper      reach a volume level with single steps
+    Persistence/TVRepository   storage interface + UserDefaults implementation
+    AndroidTV/  Roku/          protocol drivers (the only platform-specific code)
+    Discovery/  Apps/  Updates/
+  TCLRemote/                   menu bar app
+    App/                       entry point, status item + popover
+    State/AppStore             presentation state; coordinates TVKit and system services
+    Services/                  connectivity monitor, notifications, login item, preferences
+    Presentation/              SwiftUI screens and components
+Tests/TVKitTests/              library, repository, stepper, protocol, live-TV (opt-in) tests
 ```
-The app depends on `TVKit` through its public API only; adding a TV platform means one new `TVRemote` implementation in TVKit.
+- The app talks to TVs only through `TVRemote` and capability protocols; `RemoteFactory` is the only place that knows the concrete drivers.
+- Business rules live in `TVLibrary` (a value type, no I/O); `AppStore` just applies them and persists via `TVRepository`.
+- Adding a platform (e.g. Fire TV) = a new driver in TVKit + one line in `RemoteFactory`.
 
 ## Distribution
 - `scripts/build.sh` builds a universal (Apple Silicon + Intel) app. Set `VERSION=1.2.0` to stamp the version and `SIGN_IDENTITY="Developer ID Application: …"` to sign with hardened runtime (ad-hoc otherwise).

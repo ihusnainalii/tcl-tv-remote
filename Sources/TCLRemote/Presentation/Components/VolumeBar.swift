@@ -5,7 +5,7 @@ import TVKit
 /// Live volume from Google TV. Drag it, or swipe two fingers on the trackpad over it.
 struct VolumeBar: View {
     @EnvironmentObject var s: Store
-    let volume: Store.Volume
+    let volume: TVVolume
     @State private var hover = false
     @State private var dragging = false
 
@@ -72,14 +72,17 @@ private struct ScrollCatcher: NSViewRepresentable {
         private var accumulated: CGFloat = 0
 
         override func scrollWheel(with e: NSEvent) {
-            // Horizontal or vertical swipe both work; right/up = louder. Precise (trackpad) deltas
-            // are small, so accumulate ~6pt per step; mouse wheels step per notch.
+            // Momentum events keep coming after the fingers lift; they made the volume run away.
+            guard e.momentumPhase.isEmpty else { return }
+            if e.phase == .began { accumulated = 0 }
+            // Horizontal or vertical swipe both work; right/up = louder. Mouse wheels step per notch.
             let raw = abs(e.scrollingDeltaX) > abs(e.scrollingDeltaY) ? -e.scrollingDeltaX : e.scrollingDeltaY
             let delta = e.isDirectionInvertedFromDevice ? -raw : raw
-            accumulated += e.hasPreciseScrollingDeltas ? delta : delta * 6
-            while abs(accumulated) >= 6 {
+            let perStep: CGFloat = 14 // points of finger travel per volume step
+            accumulated += e.hasPreciseScrollingDeltas ? delta : delta * perStep
+            while abs(accumulated) >= perStep {
                 onStep?(accumulated > 0 ? 1 : -1)
-                accumulated -= accumulated > 0 ? 6 : -6
+                accumulated -= accumulated > 0 ? perStep : -perStep
             }
         }
     }

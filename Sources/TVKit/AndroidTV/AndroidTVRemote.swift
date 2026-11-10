@@ -4,14 +4,14 @@ import Security
 // MARK: - Android TV Remote v2 (pairing :6467, control :6466)
 
 @MainActor
-public final class AndroidTVRemote: TVRemote {
+public final class AndroidTVRemote: TVRemote, PairingCapable, StateReporting {
     public let host: String
     private var conn: TLSConn?
     private var pairConn: TLSConn?
     private var active = false
     private var imeCounter = 0, fieldCounter = 0
     public var onPower: ((Bool) -> Void)?
-    public var onVolume: ((_ level: Int, _ max: Int, _ muted: Bool) -> Void)?
+    public var onVolume: ((TVVolume) -> Void)?
     public var onDisconnect: (() -> Void)?
 
     public static let features = 622 // ping | key | ime | power | volume | app link
@@ -90,7 +90,7 @@ public final class AndroidTVRemote: TVRemote {
         }
         if let start = m.msg(40) { onPower?((start.int(1) ?? 0) != 0) }
         if let v = m.msg(50), let max = v.int(6), max > 0 {
-            onVolume?(v.int(7) ?? 0, max, (v.int(8) ?? 0) != 0)
+            onVolume?(TVVolume(level: v.int(7) ?? 0, max: max, muted: (v.int(8) ?? 0) != 0))
         }
     }
 

@@ -14,7 +14,7 @@ final class LiveTVTests: XCTestCase {
         let tv = AndroidTVRemote(host: host)
         var volume: (Int, Int, Bool)?
         var power: Bool?
-        tv.onVolume = { volume = ($0, $1, $2) }
+        tv.onVolume = { volume = ($0.level, $0.max, $0.muted) }
         tv.onPower = { power = $0 }
 
         do {
