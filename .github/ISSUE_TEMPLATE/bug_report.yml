@@ -1,0 +1,42 @@
+name: Bug report
+description: Something isn't working
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the panel
+        2. ...
+  - type: dropdown
+    id: tv
+    attributes:
+      label: TV type
+      options: [Google TV, Android TV, Roku TV, Not sure]
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: TV model (and TV software version if you know it)
+      placeholder: e.g. TCL 55C845, Google TV 12
+  - type: input
+    id: versions
+    attributes:
+      label: App and macOS version
+      placeholder: e.g. TCL Remote 1.1.0, macOS 15.2, Apple Silicon
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or recordings
+      description: Optional, but they help a lot.
