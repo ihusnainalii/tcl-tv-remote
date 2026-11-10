@@ -54,15 +54,18 @@ extension View {
 
 struct RootView: View {
     @EnvironmentObject var s: Store
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func slide(_ edge: Edge) -> AnyTransition { reduceMotion ? .opacity : .push(from: edge) }
 
     var body: some View {
         VStack(spacing: 14) {
             Header()
             ZStack {
                 switch s.screen {
-                case .devices: DevicesView().transition(.push(from: .leading))
-                case .pairing: PairingView().transition(.push(from: .trailing))
-                case .remote: RemoteView().transition(.push(from: .trailing))
+                case .devices: DevicesView().transition(slide(.leading))
+                case .pairing: PairingView().transition(slide(.trailing))
+                case .remote: RemoteView().transition(slide(.trailing))
                 }
             }
             .frame(maxWidth: .infinity)
@@ -116,13 +119,20 @@ struct Header: View {
             } else if s.screen == .devices, s.tv != nil {
                 Button { s.select(s.tv!) } label: { icon("appletvremote.gen4") }.buttonStyle(PressStyle()).help("Remote")
             }
-            Button { NSApp.terminate(nil) } label: { icon("power") }.buttonStyle(PressStyle()).help("Quit")
+            Menu {
+                Toggle("Launch at Login", isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
+                Button("Find TVs…") { s.showDevices() }
+                Divider()
+                Button("Quit TCL Remote") { NSApp.terminate(nil) }.keyboardShortcut("q")
+            } label: { icon("ellipsis") }
+            .menuStyle(.button).buttonStyle(PressStyle()).menuIndicator(.hidden).fixedSize()
+            .accessibilityLabel("More options")
         }
         .animation(.smooth, value: s.link)
     }
 
     func icon(_ name: String) -> some View {
-        Image(systemName: name).font(.system(size: 12, weight: .semibold))
+        Image(systemName: name).accessibilityHidden(true).font(.system(size: 12, weight: .semibold))
             .frame(width: 28, height: 28).pill(Circle())
     }
 }
@@ -131,13 +141,14 @@ struct StatusDot: View {
     let color: Color
     let pulsing: Bool
     @State private var on = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Circle().fill(color).frame(width: 7, height: 7)
             .background(
                 Circle().stroke(color, lineWidth: 1.5)
                     .scaleEffect(on ? 2.6 : 1).opacity(on ? 0 : 0.7)
-                    .opacity(pulsing ? 1 : 0)
+                    .opacity(pulsing && !reduceMotion ? 1 : 0)
             )
             .onAppear { withAnimation(.easeOut(duration: 1.4).repeatForever(autoreverses: false)) { on = true } }
     }
@@ -256,9 +267,10 @@ struct DeviceRow: View {
 }
 
 struct Radar: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
-        TimelineView(.animation) { t in
-            let phase = t.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 2) / 2
+        TimelineView(.animation(paused: reduceMotion)) { t in
+            let phase = reduceMotion ? 0.3 : t.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 2) / 2
             ZStack {
                 ForEach(0..<3) { i in
                     let p = (phase + Double(i) / 3).truncatingRemainder(dividingBy: 1)
@@ -269,6 +281,7 @@ struct Radar: View {
                     .shadow(color: .purple.opacity(0.6), radius: 8)
             }
         }
+        .accessibilityLabel("Scanning for TVs")
     }
 }
 
@@ -343,7 +356,7 @@ struct RemoteView: View {
     @FocusState private var focused: Bool
     @Namespace private var ns
 
-    enum Tab: String, CaseIterable { case apps = "Apps", keypad = "Keypad", type = "Type" }
+    enum Tab: String, CaseIterable { case apps = "Apps", keypad = "Keypad", type = "Type", more = "More" }
 
     var body: some View {
         VStack(spacing: 14) {
@@ -354,20 +367,22 @@ struct RemoteView: View {
                     Image(systemName: "power").font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
                         .frame(width: 38, height: 38).background(Theme.power, in: Circle())
                         .shadow(color: .red.opacity(s.tvOn == false ? 0 : 0.45), radius: 8, y: 2)
-                }.buttonStyle(PressStyle()).help("Power")
+                }.buttonStyle(PressStyle()).help("Power").accessibilityLabel("Power")
                 Spacer()
                 Menu {
                     ForEach([Key.hdmi1, .hdmi2, .hdmi3, .hdmi4], id: \.self) { k in
                         Button("HDMI \(k.rawValue.last!)") { s.press(k) }
                     }
-                    Button("TV / Tuner") { s.press(.tuner) }
+                    Button("AV") { s.press(.av) }
+                    Button("Live TV") { s.press(.tuner) }
                 } label: {
                     Image(systemName: "rectangle.on.rectangle").font(.system(size: 13, weight: .semibold))
                         .frame(width: 38, height: 38).pill(Circle())
                 }
                 .menuStyle(.button).buttonStyle(PressStyle()).menuIndicator(.hidden).fixedSize().help("Input")
+                .accessibilityLabel("Input source")
                 key(.search, "magnifyingglass", size: 38, circle: true)
-                key(.menu, "gearshape", size: 38, circle: true)
+                key(.settings, "gearshape", size: 38, circle: true)
             }
 
             DPad()
@@ -391,6 +406,8 @@ struct RemoteView: View {
                 Rocker(up: .chUp, down: .chDown, upIcon: "chevron.up", downIcon: "chevron.down", label: "CH")
             }
 
+            if let v = s.volume { VolumeBar(volume: v).transition(.opacity.combined(with: .move(edge: .top))) }
+
             tabs
         }
         .disabled(s.link == .needsPairing)
@@ -399,7 +416,7 @@ struct RemoteView: View {
         .focused($focused)
         .onKeyPress { k in
             let map: [KeyEquivalent: Key] = [.upArrow: .up, .downArrow: .down, .leftArrow: .left, .rightArrow: .right,
-                                             .return: .ok, .delete: .back, .space: .playPause, .home: .home]
+                                             .return: .ok, .delete: .backspace, .escape: .back, .space: .playPause, .home: .home]
             if let key = map[k.key] { s.press(key); return .handled }
             switch k.characters {
             case "+", "=": s.press(.volUp)
@@ -419,13 +436,14 @@ struct RemoteView: View {
             card(icon: "link.badge.plus", title: "Pair with this TV", subtitle: "One-time setup. A code will appear on the TV.",
                  action: "Pair") { s.beginPairing() }
         case .failed:
-            card(icon: "wifi.exclamationmark", title: "TV is unreachable", subtitle: "Is it on and on the same network?",
-                 action: "Retry") { s.connect() }
+            card(icon: "wifi.exclamationmark", title: "TV is unreachable", subtitle: "Retrying automatically…",
+                 action: "Retry", secondary: s.tv?.kind == .androidTV ? ("Re-pair", { s.beginPairing() }) : nil) { s.connect() }
         default: EmptyView()
         }
     }
 
-    func card(icon: String, title: String, subtitle: String, action: String, _ run: @escaping () -> Void) -> some View {
+    func card(icon: String, title: String, subtitle: String, action: String,
+              secondary: (String, () -> Void)? = nil, _ run: @escaping () -> Void) -> some View {
         HStack(spacing: 10) {
             Image(systemName: icon).font(.title3).foregroundStyle(Theme.accent)
             VStack(alignment: .leading, spacing: 1) {
@@ -433,6 +451,7 @@ struct RemoteView: View {
                 Text(subtitle).font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()
+            if let secondary { Button(secondary.0, action: secondary.1).buttonStyle(.bordered).controlSize(.small) }
             Button(action, action: run).buttonStyle(.borderedProminent).controlSize(.small)
         }
         .padding(10)
@@ -463,6 +482,7 @@ struct RemoteView: View {
                 case .apps: AppsGrid()
                 case .keypad: keypad
                 case .type: typer
+                case .more: more
                 }
             }
             .transition(.blurReplace)
@@ -473,9 +493,27 @@ struct RemoteView: View {
     var keypad: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
             ForEach([1, 2, 3, 4, 5, 6, 7, 8, 9], id: \.self) { n in digit(n) }
-            key(.back, "delete.left")
+            key(.backspace, "delete.left")
             digit(0)
             key(.ok, "return")
+        }
+    }
+
+    var more: some View {
+        let items: [(Key, String)] = [(.guide, "list.bullet.rectangle"), (.exit, "xmark.circle"), (.captions, "captions.bubble"),
+                                      (.previous, "backward.end.fill"), (.stop, "stop.fill"), (.next, "forward.end.fill"),
+                                      (.powerOn, "power.circle"), (.powerOff, "power.circle.fill"), (.menu, "line.3.horizontal")]
+        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+            ForEach(items, id: \.0) { k, icon in
+                Button { s.press(k) } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: icon).font(.system(size: 14, weight: .semibold))
+                        Text(k.label).font(.system(size: 9, weight: .medium)).foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 46).pill(RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(PressStyle())
+            }
         }
     }
 
@@ -506,6 +544,8 @@ struct RemoteView: View {
                 .pill(RoundedRectangle(cornerRadius: circle ? size / 2 : 11))
         }
         .buttonStyle(PressStyle())
+        .help(k.label)
+        .accessibilityLabel(k.label)
     }
 }
 
@@ -534,6 +574,7 @@ struct DPad: View {
                         .frame(width: 48, height: 48).contentShape(Rectangle())
                 }
                 .buttonStyle(PressStyle())
+                .accessibilityLabel(k.label)
                 .offset(x: cos(a * .pi / 180) * 62, y: sin(a * .pi / 180) * 62)
             }
 
@@ -564,10 +605,10 @@ struct Rocker: View {
     var body: some View {
         VStack(spacing: 0) {
             Button { s.press(up) } label: { Image(systemName: upIcon).frame(width: 46, height: 38).contentShape(Rectangle()) }
-                .buttonStyle(PressStyle())
+                .buttonStyle(PressStyle()).accessibilityLabel(up.label)
             Text(label).font(.system(size: 9, weight: .bold)).foregroundStyle(.secondary)
             Button { s.press(down) } label: { Image(systemName: downIcon).frame(width: 46, height: 38).contentShape(Rectangle()) }
-                .buttonStyle(PressStyle())
+                .buttonStyle(PressStyle()).accessibilityLabel(down.label)
         }
         .font(.system(size: 13, weight: .semibold))
         .pill(Capsule())
@@ -613,5 +654,30 @@ struct AppsGrid: View {
         if let c = known[name] { return c }
         let palette: [Color] = [.blue, .purple, .pink, .orange, .teal, .indigo, .mint]
         return palette[abs(name.unicodeScalars.reduce(0) { $0 &+ Int($1.value) }) % palette.count]
+    }
+}
+
+/// Live volume level reported by Google TV.
+struct VolumeBar: View {
+    let volume: Store.Volume
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: volume.muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                .font(.caption).foregroundStyle(.secondary).contentTransition(.symbolEffect(.replace))
+            GeometryReader { g in
+                Capsule().fill(Theme.fill)
+                    .overlay(alignment: .leading) {
+                        Capsule().fill(Theme.accent)
+                            .frame(width: g.size.width * CGFloat(volume.level) / CGFloat(max(volume.max, 1)))
+                            .opacity(volume.muted ? 0.35 : 1)
+                    }
+            }
+            .frame(height: 6)
+            Text("\(volume.level)").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                .contentTransition(.numericText()).frame(width: 24, alignment: .trailing)
+        }
+        .animation(.smooth, value: volume)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(volume.muted ? "Muted" : "Volume \(volume.level) of \(volume.max)")
     }
 }

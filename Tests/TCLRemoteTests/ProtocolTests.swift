@@ -11,6 +11,11 @@ final class ProtocolTests: XCTestCase {
         XCTAssertEqual(String(data: s, encoding: .utf8), "hi")
     }
 
+    func testEveryKeyHasAndroidCode() {
+        for k in Key.allCases { XCTAssertNotEqual(k.android, 0, "\(k) unmapped") }
+        XCTAssertEqual(Key.n0.android, 7); XCTAssertEqual(Key.next.android, 87); XCTAssertNil(Key.next.digit)
+    }
+
     func testRSAComponentsStripsLeadingZero() {
         // SEQUENCE { INTEGER 00 C0 FF, INTEGER 01 00 01 }
         let der = Data([0x30, 0x0A, 0x02, 0x03, 0x00, 0xC0, 0xFF, 0x02, 0x03, 0x01, 0x00, 0x01])

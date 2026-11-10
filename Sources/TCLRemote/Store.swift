@@ -1,5 +1,6 @@
 import AppKit
 import Network
+import ServiceManagement
 import SwiftUI
 
 /// A TV we've connected to before.
@@ -24,11 +25,17 @@ final class Store: ObservableObject {
     @Published var toast: String?
     @Published var pairError = false
     @Published var tvOn: Bool?
+    @Published var volume: Volume?
+    @Published var launchAtLogin = SMAppService.mainApp.status == .enabled
+
+    struct Volume: Equatable { var level: Int, max: Int, muted: Bool }
 
     private var remote: TVRemote?
     private let discovery = Discovery()
     private let pathMonitor = NWPathMonitor()
     private let knownKey = "knownTVs"
+    private var failures = 0
+    private var retryTask: Task<Void, Never>?
 
     /// Found on the network but never connected.
     var newTVs: [TV] { found.filter { f in !known.contains { $0.tv.id == f.id } } }
@@ -50,6 +57,21 @@ final class Store: ObservableObject {
             }
         }
         pathMonitor.start(queue: .main)
+
+        // Reconnect after the Mac wakes from sleep.
+        NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(2)) // let Wi-Fi come back first
+                if let self, self.tv != nil, self.link != .connected { self.connect() }
+            }
+        }
+    }
+
+    func setLaunchAtLogin(_ on: Bool) {
+        do {
+            if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
+        } catch { show("Couldn't change login item: \(error.localizedDescription)") }
+        launchAtLogin = SMAppService.mainApp.status == .enabled
     }
 
     func scan() {
@@ -79,8 +101,16 @@ final class Store: ObservableObject {
     func select(_ tv: TV) {
         self.tv = tv
         remote = tv.kind == .roku ? RokuRemote(host: tv.host) : AndroidTVRemote(host: tv.host)
-        (remote as? AndroidTVRemote)?.onPower = { [weak self] on in withAnimation { self?.tvOn = on } }
-        apps = []; tvOn = nil
+        if let a = remote as? AndroidTVRemote {
+            a.onPower = { [weak self] on in withAnimation { self?.tvOn = on } }
+            a.onVolume = { [weak self] l, m, muted in withAnimation(.smooth) { self?.volume = Volume(level: l, max: m, muted: muted) } }
+            a.onDisconnect = { [weak self] in
+                guard let self, self.link == .connected else { return }
+                withAnimation(.smooth) { self.link = .failed }
+                self.scheduleRetry()
+            }
+        }
+        apps = []; tvOn = nil; volume = nil; failures = 0; retryTask?.cancel()
         go(.remote)
         connect()
     }
@@ -100,6 +130,8 @@ final class Store: ObservableObject {
             do {
                 try await remote.connect()
                 withAnimation(.smooth) { link = .connected }
+                if failures > 0 { show("Reconnected") }
+                failures = 0
                 remember(tv)
                 let list = await remote.apps()
                 withAnimation(.spring) { apps = list }
@@ -108,8 +140,22 @@ final class Store: ObservableObject {
                 // A remembered Google TV was paired before, so a failure means offline/moved, not unpaired.
                 let wasPaired = known.contains { $0.id == tv.id }
                 withAnimation(.smooth) { link = isAndroid && !wasPaired ? .needsPairing : .failed }
-                if wasPaired { scan() } // maybe its IP changed
+                failures += 1
+                if wasPaired && failures == 1 { scan() } // maybe its IP changed
+                if isAndroid && !wasPaired { return }
+                scheduleRetry()
             }
+        }
+    }
+
+    /// ponytail: fixed 10s retry while offline; add backoff if battery use shows up.
+    private func scheduleRetry() {
+        retryTask?.cancel()
+        let id = tv?.id
+        retryTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(10))
+            guard let self, !Task.isCancelled, self.tv?.id == id, self.link == .failed else { return }
+            self.connect()
         }
     }
 
@@ -164,9 +210,12 @@ final class Store: ObservableObject {
             do {
                 try await op(remote)
                 if link != .connected, let tv { withAnimation(.smooth) { link = .connected }; remember(tv) }
+            } catch TVError.unsupported(let name) {
+                show("\(name) isn't available on this TV")
             } catch {
                 withAnimation(.smooth) { link = .failed }
                 show(error.localizedDescription)
+                scheduleRetry()
             }
         }
     }

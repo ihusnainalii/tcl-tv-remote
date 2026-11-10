@@ -11,11 +11,46 @@ enum ClientIdentity {
     private static let pass = "tclremote"
     private static var cached: SecIdentity?
 
+    private static let keychainQuery: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: "TCLRemote",
+        kSecAttrAccount as String: "client-identity",
+    ]
+
+    /// The PKCS#12 blob lives in the Keychain; the on-disk copy is only used to migrate older installs.
+    private static func p12Data() throws -> Data {
+        var q = keychainQuery
+        q[kSecReturnData as String] = true
+        var out: CFTypeRef?
+        if SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess, let d = out as? Data { return d }
+
+        let legacy = dir.appendingPathComponent("client.p12")
+        let data: Data
+        if let d = try? Data(contentsOf: legacy) {
+            data = d
+        } else {
+            let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+            defer { try? FileManager.default.removeItem(at: tmp) }
+            data = try generate(in: tmp)
+        }
+        var add = keychainQuery
+        add[kSecValueData as String] = data
+        add[kSecAttrLabel as String] = "TCL Remote pairing certificate"
+        let status = SecItemAdd(add as CFDictionary, nil)
+        guard status == errSecSuccess || status == errSecDuplicateItem else { throw TVError.identity("keychain \(status)") }
+        try? FileManager.default.removeItem(at: dir) // drop legacy files once stored
+        return data
+    }
+
+    /// Deletes the certificate; every Google TV must be paired again afterwards.
+    static func reset() {
+        SecItemDelete(keychainQuery as CFDictionary)
+        cached = nil
+    }
+
     static func load() throws -> SecIdentity {
         if let cached { return cached }
-        let p12 = dir.appendingPathComponent("client.p12")
-        if !FileManager.default.fileExists(atPath: p12.path) { try generate(p12) }
-        let data = try Data(contentsOf: p12)
+        let data = try p12Data()
         let opts: [String: Any] = [kSecImportExportPassphrase as String: pass, kSecImportToMemoryOnly as String: true]
         var items: CFArray?
         let status = SecPKCS12Import(data as CFData, opts as CFDictionary, &items)
@@ -26,13 +61,15 @@ enum ClientIdentity {
     }
 
     // ponytail: shells out to the system LibreSSL instead of hand-writing X.509 DER.
-    private static func generate(_ p12: URL) throws {
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let key = dir.appendingPathComponent("key.pem").path, cert = dir.appendingPathComponent("cert.pem").path
+    private static func generate(in tmp: URL) throws -> Data {
+        try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true,
+                                                attributes: [.posixPermissions: 0o700])
+        let key = tmp.appendingPathComponent("key.pem").path, cert = tmp.appendingPathComponent("cert.pem").path
+        let p12 = tmp.appendingPathComponent("client.p12")
         try openssl(["req", "-x509", "-newkey", "rsa:2048", "-keyout", key, "-out", cert, "-days", "3650", "-nodes", "-subj", "/CN=atvremote"])
         try openssl(["pkcs12", "-export", "-inkey", key, "-in", cert, "-out", p12.path, "-passout", "pass:\(pass)",
                      "-certpbe", "PBE-SHA1-3DES", "-keypbe", "PBE-SHA1-3DES"])
-        try? FileManager.default.removeItem(atPath: key)
+        return try Data(contentsOf: p12)
     }
 
     private static func openssl(_ args: [String]) throws {
@@ -192,6 +229,8 @@ final class AndroidTVRemote: TVRemote {
     private var active = false
     private var imeCounter = 0, fieldCounter = 0
     var onPower: ((Bool) -> Void)?
+    var onVolume: ((_ level: Int, _ max: Int, _ muted: Bool) -> Void)?
+    var onDisconnect: (() -> Void)?
 
     static let features = 622 // ping | key | ime | power | volume | app link
 
@@ -239,7 +278,7 @@ final class AndroidTVRemote: TVRemote {
         try await c.start()
         Task { [weak self] in
             while let msg = try? await c.read() { await self?.handle(msg, on: c) }
-            if self?.conn === c { self?.conn = nil; self?.active = false }
+            if self?.conn === c { self?.conn = nil; self?.active = false; self?.onDisconnect?() }
         }
         // ponytail: polls for the handshake instead of a continuation; fine at 3s max.
         for _ in 0..<60 where !active { try await Task.sleep(for: .milliseconds(50)) }
@@ -268,6 +307,9 @@ final class AndroidTVRemote: TVRemote {
             fieldCounter = ime.int(2) ?? fieldCounter
         }
         if let start = m.msg(40) { onPower?((start.int(1) ?? 0) != 0) }
+        if let v = m.msg(50), let max = v.int(6), max > 0 {
+            onVolume?(v.int(7) ?? 0, max, (v.int(8) ?? 0) != 0)
+        }
     }
 
     private func send(_ payload: Data) async throws {
@@ -297,7 +339,8 @@ final class AndroidTVRemote: TVRemote {
     func apps() async -> [TVApp] {
         [("YouTube", "https://www.youtube.com"), ("Netflix", "https://www.netflix.com/title"),
          ("Prime Video", "https://app.primevideo.com"), ("Disney+", "https://www.disneyplus.com"),
-         ("Spotify", "spotify://"), ("Max", "https://play.max.com")].map { TVApp(id: $0.1, name: $0.0) }
+         ("Spotify", "spotify://"), ("Max", "https://play.max.com"),
+         ("Apple TV", "https://tv.apple.com")].map { TVApp(id: $0.1, name: $0.0) }
     }
 
     func launch(_ app: TVApp) async throws {
