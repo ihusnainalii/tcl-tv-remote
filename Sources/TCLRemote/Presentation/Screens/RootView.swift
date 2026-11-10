@@ -7,8 +7,6 @@ struct RootView: View {
     @EnvironmentObject var s: Store
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var panelSize: CGSize = .zero
-
     func slide(_ edge: Edge) -> AnyTransition { reduceMotion ? .opacity : .push(from: edge) }
 
     var body: some View {
@@ -26,10 +24,7 @@ struct RootView: View {
         }
         .padding(16)
         .frame(width: 300)
-        .fixedSize(horizontal: false, vertical: true)
-        .onGeometryChange(for: CGSize.self) { $0.size } action: { panelSize = $0 }
-        .background(PanelSizer(size: panelSize))
-        .frame(maxHeight: .infinity, alignment: .top)
+        .fixedSize(horizontal: false, vertical: true) // popover sizes itself to this ideal height
         .overlay(alignment: .bottom) {
             if let t = s.toast {
                 Text(t)
