@@ -33,7 +33,10 @@ struct PressStyle: ButtonStyle {
             c.label
                 .scaleEffect(c.isPressed ? pressScale : hover ? hoverScale : 1)
                 .brightness(c.isPressed ? 0.12 : hover ? 0.04 : 0)
-                .animation(Theme.spring, value: c.isPressed)
+                // Soft accent glow while pressed, springing back on release.
+                .shadow(color: Theme.glow.opacity(c.isPressed ? 0.35 : 0), radius: c.isPressed ? 10 : 0)
+                .animation(c.isPressed ? .spring(response: 0.18, dampingFraction: 0.6) : .spring(response: 0.35, dampingFraction: 0.55),
+                           value: c.isPressed)
                 .animation(.easeOut(duration: 0.15), value: hover)
                 .onHover { hover = $0 }
         }
@@ -50,7 +53,9 @@ private struct RepeatPress: ViewModifier {
         content
             .scaleEffect(task != nil ? 0.88 : hover ? 1.04 : 1)
             .brightness(task != nil ? 0.12 : hover ? 0.04 : 0)
-            .animation(Theme.spring, value: task != nil)
+            .shadow(color: Theme.glow.opacity(task != nil ? 0.35 : 0), radius: task != nil ? 10 : 0)
+            .animation(task != nil ? .spring(response: 0.18, dampingFraction: 0.6) : .spring(response: 0.35, dampingFraction: 0.55),
+                       value: task != nil)
             .animation(.easeOut(duration: 0.15), value: hover)
             .onHover { hover = $0 }
             .gesture(DragGesture(minimumDistance: 0)

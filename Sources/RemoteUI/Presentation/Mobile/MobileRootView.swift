@@ -37,7 +37,10 @@ struct MobileRootView: View {
             }
         }
         .tint(AccentStyle.current.colors.0)
-        .onAppear { if isWide, tab == .apps || tab == .keys { tab = .remote } }
+        .onAppear {
+            if isWide, tab == .apps || tab == .keys { tab = .remote }
+            if onboarded { SystemNotifications.requestAccess() } // no-op once answered
+        }
         .onChange(of: isWide) { if isWide, tab == .apps || tab == .keys { tab = .remote } }
         // TV list and pairing float above whichever tab is open.
         .sheet(isPresented: Binding(get: { s.screen == .devices && s.tv != nil },
@@ -45,6 +48,7 @@ struct MobileRootView: View {
             NavigationStack {
                 ScrollView { DevicesView().padding(20) }
                     .navigationTitle(L10n.Mobile.tvs)
+                    .navigationBarTitleDisplayMode(.inline)
                     .toolbar { ToolbarItem(placement: .confirmationAction) { Button(L10n.Common.done) { s.closeSettings() } } }
             }
             .presentationDetents([.medium, .large])
@@ -55,7 +59,7 @@ struct MobileRootView: View {
         }
         .overlay(alignment: .bottom) { Toast().padding(.bottom, 90) }
         .fullScreenCover(isPresented: Binding(get: { !onboarded }, set: { if !$0 { onboarded = true } })) {
-            OnboardingView { onboarded = true }
+            OnboardingView { onboarded = true; SystemNotifications.requestAccess() }
         }
         .themed()
     }
@@ -77,6 +81,7 @@ struct MobileScreen<Content: View>: View {
             .scrollBounceBehavior(.basedOnSize)
             .background(Color.clear)
             .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { TVSwitcher() } }
         }
     }
@@ -118,22 +123,106 @@ struct TVSwitcher: View {
     }
 }
 
-/// Shown on tabs that need a TV when none is selected yet.
+/// Shown on tabs that need a TV when none is selected yet. Empty state: one icon, one title, one
+/// message, centred, with a primary Scan button and Add by IP. Once TVs are found it shows the list.
 struct NoTVView: View {
     @EnvironmentObject var s: Store
+    @State private var addingIP = false
 
     var body: some View {
-        VStack(spacing: 20) {
-            VStack(spacing: 10) {
-                Text(L10n.Mobile.Welcome.title).font(.title2.weight(.bold))
-                Text(L10n.Mobile.Welcome.subtitle).font(.subheadline).foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.top, 12)
-            DevicesView()
+        if s.known.isEmpty && s.newTVs.isEmpty {
+            emptyState
+                .containerRelativeFrame(.vertical) // centred in the scroll area
+                .sheet(isPresented: $addingIP) { AddByIPSheet().environmentObject(s).presentationDetents([.height(300)]) }
+        } else {
+            DevicesView().frame(maxWidth: 560).frame(maxWidth: .infinity).padding(.top, 8)
         }
-        .frame(maxWidth: 560)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 18) {
+            ZStack {
+                if s.scanning {
+                    Radar().frame(width: 120, height: 120).transition(.opacity)
+                } else {
+                    Image(systemName: "tv.slash").font(.system(size: 52, weight: .light)).foregroundStyle(.secondary)
+                        .frame(width: 120, height: 120).transition(.opacity)
+                }
+            }
+            .animation(.smooth, value: s.scanning)
+
+            VStack(spacing: 8) {
+                Text(s.scanning ? L10n.Mobile.Empty.searching : L10n.Devices.noTVs).font(.title2.weight(.bold))
+                Text(s.scanning ? L10n.Mobile.Empty.searchingHint : L10n.Devices.sameWifi)
+                    .font(.body).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .contentTransition(.opacity)
+
+            VStack(spacing: 12) {
+                Button { s.scan() } label: {
+                    HStack(spacing: 8) {
+                        if s.scanning { ProgressView().tint(.white) } else { Image(systemName: "dot.radiowaves.left.and.right") }
+                        Text(s.scanning ? L10n.Devices.scanning : L10n.Mobile.scanForTVs)
+                    }
+                    .font(.headline).foregroundStyle(.white)
+                    .frame(maxWidth: .infinity).frame(height: 54)
+                    .background(Theme.accent, in: Capsule())
+                }
+                .buttonStyle(PressStyle(hoverScale: 1, pressScale: 0.97))
+                .disabled(s.scanning)
+
+                Button { addingIP = true } label: {
+                    Label(L10n.Devices.addByIP, systemImage: "plus").font(.headline)
+                        .frame(maxWidth: .infinity).frame(height: 54)
+                        .background(.fill.tertiary, in: Capsule())
+                }
+                .buttonStyle(PressStyle(hoverScale: 1, pressScale: 0.97))
+            }
+            .frame(maxWidth: 360)
+            .padding(.top, 10)
+        }
+        .padding(.horizontal, 12)
+        .frame(maxWidth: 480)
         .frame(maxWidth: .infinity)
+    }
+}
+
+/// Connect to a TV by its IP address.
+struct AddByIPSheet: View {
+    @EnvironmentObject var s: Store
+    @Environment(\.dismiss) private var dismiss
+    @State private var ip = ""
+    @State private var kind: TV.Kind = .androidTV
+    @FocusState private var focused: Bool
+
+    private var trimmed: String { ip.trimmingCharacters(in: .whitespaces) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(L10n.Devices.addByIP).font(.title3.weight(.bold))
+            TextField(L10n.Devices.ipPlaceholder, text: $ip)
+                .keyboardType(.numbersAndPunctuation).textInputAutocapitalization(.never).autocorrectionDisabled()
+                .focused($focused)
+                .padding(14).background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            Picker("", selection: $kind) {
+                ForEach(TV.Kind.allCases, id: \.self) { Text($0.rawValue) }
+            }
+            .pickerStyle(.segmented).labelsHidden()
+            Button {
+                s.select(TV(name: L10n.Devices.manualName(trimmed), host: trimmed, kind: kind))
+                dismiss()
+            } label: {
+                Text(L10n.Devices.connect).font(.headline).foregroundStyle(.white)
+                    .frame(maxWidth: .infinity).frame(height: 52)
+                    .background(Theme.accent, in: Capsule())
+                    .opacity(trimmed.isEmpty ? 0.5 : 1)
+            }
+            .buttonStyle(PressStyle(hoverScale: 1, pressScale: 0.97))
+            .disabled(trimmed.isEmpty)
+        }
+        .padding(24)
+        .onAppear { focused = true }
     }
 }
 

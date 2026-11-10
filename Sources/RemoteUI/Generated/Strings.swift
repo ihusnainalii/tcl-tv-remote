@@ -175,8 +175,16 @@ public enum L10n {
   public enum Mobile {
     /// Find TVs
     public static let findTVs = L10n.tr("Localizable", "mobile.findTVs", fallback: "Find TVs")
+    /// Scan for TVs
+    public static let scanForTVs = L10n.tr("Localizable", "mobile.scanForTVs", fallback: "Scan for TVs")
     /// TVs
     public static let tvs = L10n.tr("Localizable", "mobile.tvs", fallback: "TVs")
+    public enum Empty {
+      /// Looking for TVs…
+      public static let searching = L10n.tr("Localizable", "mobile.empty.searching", fallback: "Looking for TVs…")
+      /// Searching your Wi-Fi for TCL TVs.
+      public static let searchingHint = L10n.tr("Localizable", "mobile.empty.searchingHint", fallback: "Searching your Wi-Fi for TCL TVs.")
+    }
     public enum Mode {
       /// Buttons
       public static let buttons = L10n.tr("Localizable", "mobile.mode.buttons", fallback: "Buttons")

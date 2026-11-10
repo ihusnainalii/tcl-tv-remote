@@ -208,3 +208,6 @@
 "error.connectionRefused" = "The TV refused the connection. It may need pairing again.";
 "error.noWifi" = "You're not connected to Wi-Fi.";
 "error.localNetwork" = "TCL Remote needs Local Network access. Turn it on in Settings, Privacy & Security, Local Network.";
+"mobile.empty.searching" = "Looking for TVs…";
+"mobile.empty.searchingHint" = "Searching your Wi-Fi for TCL TVs.";
+"mobile.scanForTVs" = "Scan for TVs";

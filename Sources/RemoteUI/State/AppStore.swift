@@ -40,7 +40,9 @@ public final class Store: ObservableObject {
     public init(repository: TVRepository = UserDefaultsTVRepository()) {
         self.repository = repository
         library = TVLibrary(repository.load())
-        SystemNotifications.requestAccess()
+        #if os(macOS)
+        SystemNotifications.requestAccess() // iOS asks after the walkthrough instead
+        #endif
 
         if Preferences.autoConnect, let pick = library.autoConnectPick { select(pick.tv) } else { scan() }
 
