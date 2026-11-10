@@ -17,7 +17,7 @@ Changes to `main` go through pull requests; direct pushes are blocked.
 
 ## iPhone and iPad
 
-`brew install xcodegen`, then `cd iOS && xcodegen` and open `TCLRemoteiOS.xcodeproj`. Shared UI changes go in `Sources/RemoteUI`; touch-only layout goes in `Presentation/Mobile` (compiled for iOS only). CI builds the iOS app on every pull request.
+`brew install xcodegen`, then `cd iOS && xcodegen` and open `TCLRemote.xcodeproj` (schemes: TCL Remote iOS / watchOS / macOS). Shared UI changes go in `Sources/RemoteUI`; touch-only layout goes in `Presentation/Mobile` (compiled for iOS only). CI builds the iOS app on every pull request.
 
 ## Where code goes
 

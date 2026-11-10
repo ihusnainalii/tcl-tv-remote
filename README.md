@@ -91,11 +91,11 @@ watchOS doesn't allow the secure socket connection Google TV needs, so the watch
 
 ```bash
 brew install xcodegen
-cd iOS && xcodegen        # generates TCLRemoteiOS.xcodeproj from project.yml
-open TCLRemoteiOS.xcodeproj
+cd iOS && xcodegen        # generates TCLRemote.xcodeproj from project.yml
+open TCLRemote.xcodeproj
 ```
 
-Run the `TCLRemoteiOS` scheme on a simulator. To run on a device, set your team in Xcode. A free Personal Team works, but its builds expire after 7 days.
+Pick a scheme: **TCL Remote iOS** (iPhone and iPad, with the widget), **TCL Remote watchOS** or **TCL Remote macOS** (menu bar app). To run on a device, set your team in Xcode. A free Personal Team works, but its builds expire after 7 days.
 
 **Differences from the Mac app:**
 - No launch at login, quit or update check. iOS apps update through the App Store.
