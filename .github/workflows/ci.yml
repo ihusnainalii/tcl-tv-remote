@@ -110,6 +110,12 @@ jobs:
           xcodebuild -project TCLRemoteiOS.xcodeproj -scheme TCLRemoteiOS \
             -destination 'generic/platform=iOS Simulator' -derivedDataPath ../.build/ios \
             CODE_SIGNING_ALLOWED=NO -quiet build
+      - name: Build Apple Watch app
+        run: |
+          cd iOS
+          xcodebuild -project TCLRemoteiOS.xcodeproj -scheme TCLRemoteWatch \
+            -destination 'generic/platform=watchOS' -derivedDataPath ../.build/watch \
+            CODE_SIGNING_ALLOWED=NO -quiet build
 
   app:
     name: App bundle

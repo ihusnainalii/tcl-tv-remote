@@ -77,6 +77,16 @@ A native iPhone and iPad app shares every rule, protocol driver and component wi
 - **Keys tab:** a live keyboard for the TV's text boxes, a number pad, and extra keys (guide, captions, stop, power on/off).
 - With a hardware keyboard attached, the same shortcuts as on the Mac work, and Settings lists them.
 
+### Home Screen widget
+
+Small and medium widgets with power, home, play/pause, mute and volume. Tapping a button opens TCL Remote and sends the key to your current TV (`tclremote://key/<key>` links).
+
+### Apple Watch
+
+A companion watch app with an arrow pad and OK, the **Digital Crown for volume**, a controls page (back, home, play/pause, mute, channels, power) and your apps.
+
+watchOS doesn't allow the secure socket connection Google TV needs, so the watch sends each button press **through the iPhone app**, which wakes in the background. The iPhone must be nearby, and you pair TVs on the iPhone. **Roku** TVs use plain HTTP, so the watch controls them directly when the iPhone isn't reachable.
+
 ### Build and run
 
 ```bash

@@ -10,6 +10,7 @@ struct TCLRemoteiOSApp: App {
         WindowGroup {
             RootView(style: .fullScreen).environmentObject(store)
                 .onAppear { store.startWatchRelay() }
+                .onOpenURL { store.handle(url: $0) }
         }
     }
 }

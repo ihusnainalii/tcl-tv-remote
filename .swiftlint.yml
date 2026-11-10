@@ -3,6 +3,8 @@ included:
   - Sources
   - Tests
   - iOS/App
+  - iOS/Watch
+  - iOS/Widget
   - Package.swift
 excluded:
   - .build

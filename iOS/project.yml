@@ -17,6 +17,7 @@ targets:
     dependencies:
       - package: TCLRemoteKit
         product: RemoteUI
+      - target: TCLRemoteWidget
     info:
       path: App/Info.plist
       properties:
@@ -33,6 +34,9 @@ targets:
         NSLocalNetworkUsageDescription: TCL Remote finds and controls TVs on your local network.
         NSBonjourServices: [_androidtvremote2._tcp]
         ITSAppUsesNonExemptEncryption: false
+        CFBundleURLTypes:
+          - CFBundleURLName: app.tclremote.ios
+            CFBundleURLSchemes: [tclremote]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.tclremote.ios
@@ -42,3 +46,49 @@ targets:
         SWIFT_VERSION: "5.0"
         CODE_SIGN_STYLE: Automatic
         # Set your team to run on a device: DEVELOPMENT_TEAM: ABCDE12345
+
+  # Home Screen widget (iPhone and iPad): one-tap remote buttons that open the app via tclremote:// links.
+  TCLRemoteWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Widget
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: TCL Remote
+        CFBundleShortVersionString: "1.1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.tclremote.ios.widget
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Automatic
+
+  # Apple Watch companion: D-pad, Digital Crown volume, controls and apps; relays through the iPhone app.
+  TCLRemoteWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "11.0"
+    sources:
+      - Watch
+    dependencies:
+      - package: TCLRemoteKit
+        product: TVKit
+    info:
+      path: Watch/Info.plist
+      properties:
+        CFBundleDisplayName: TCL Remote
+        CFBundleShortVersionString: "1.1.0"
+        CFBundleVersion: "1"
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: app.tclremote.ios
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.tclremote.ios.watchkitapp
+        PRODUCT_NAME: TCL Remote
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Automatic

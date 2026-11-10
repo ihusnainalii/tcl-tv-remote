@@ -87,6 +87,12 @@ public final class Store: ObservableObject {
         #endif
     }
 
+    /// Widget and shortcut links: `tclremote://key/<Key>` presses a key; `tclremote://open` just opens the app.
+    public func handle(url: URL) {
+        guard url.scheme == "tclremote", url.host == "key", let key = Key(rawValue: url.lastPathComponent) else { return }
+        press(key)
+    }
+
     public func showDevices() { go(.devices); scan() }
     public func showSettings() { go(.settings) }
     func closeSettings() { go(tv == nil ? .devices : .remote) }
