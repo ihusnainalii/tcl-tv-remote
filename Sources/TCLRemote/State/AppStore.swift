@@ -6,7 +6,7 @@ import TVKit
 /// system services; the rules themselves live in TVKit and are unit-tested there.
 @MainActor
 final class Store: ObservableObject {
-    enum Screen: Equatable { case devices, pairing, remote }
+    enum Screen: Equatable { case devices, pairing, remote, settings }
     enum Link: Equatable { case idle, connecting, connected, needsPairing, failed }
 
     @Published private(set) var screen: Screen = .devices
@@ -78,6 +78,8 @@ final class Store: ObservableObject {
     }
 
     func showDevices() { go(.devices); scan() }
+    func showSettings() { go(.settings) }
+    func closeSettings() { go(tv == nil ? .devices : .remote) }
 
     // MARK: connection
 

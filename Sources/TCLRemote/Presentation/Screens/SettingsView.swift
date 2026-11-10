@@ -1,18 +1,89 @@
+import AppKit
 import SwiftUI
 import TVKit
 
+/// Settings shown inside the menu bar panel, as its own screen.
 struct SettingsView: View {
+    enum Tab: String, CaseIterable { case general = "General", look = "Look", tvs = "TVs", about = "About" }
+
+    // AppStorage survives the view rebuild that a theme change triggers.
+    @AppStorage("settingsTab") private var tab = Tab.general.rawValue
+    @Namespace private var ns
+
     var body: some View {
-        TabView {
-            GeneralSettings().tabItem { Label("General", systemImage: "gearshape") }
-            AppearanceSettings().tabItem { Label("Appearance", systemImage: "paintpalette") }
-            DeviceSettings().tabItem { Label("TVs", systemImage: "tv") }
-            AboutView().tabItem { Label("About", systemImage: "info.circle") }
+        VStack(spacing: 12) {
+            HStack(spacing: 2) {
+                ForEach(Tab.allCases, id: \.self) { t in
+                    Button { withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { tab = t.rawValue } } label: {
+                        Text(t.rawValue).font(.caption.weight(.semibold))
+                            .foregroundStyle(tab == t.rawValue ? .white : .secondary)
+                            .frame(maxWidth: .infinity).padding(.vertical, 6)
+                            .background {
+                                if tab == t.rawValue { Capsule().fill(Theme.accent).matchedGeometryEffect(id: "settingsTab", in: ns) }
+                            }
+                            .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(3).pill(Capsule())
+
+            FitScroll(maxHeight: 470) {
+                Group {
+                    switch Tab(rawValue: tab) ?? .general {
+                    case .general: GeneralSettings()
+                    case .look: LookSettings()
+                    case .tvs: TVSettings()
+                    case .about: AboutSettings()
+                    }
+                }
+                .padding(.bottom, 2)
+                .transition(.blurReplace)
+                .id(tab)
+            }
         }
-        .frame(width: 480, height: 420)
-        .themed()
     }
 }
+
+// MARK: - Building blocks
+
+private struct Card<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased()).font(.caption2.weight(.semibold)).foregroundStyle(.secondary).padding(.leading, 4)
+            VStack(spacing: 0) { content }
+                .padding(.horizontal, 10).padding(.vertical, 2)
+                .pill(RoundedRectangle(cornerRadius: 12))
+        }
+    }
+}
+
+private struct ToggleRow: View {
+    let title: String
+    @Binding var isOn: Bool
+    var body: some View {
+        Toggle(isOn: $isOn) { Text(title).font(.callout) }
+            .toggleStyle(.switch).controlSize(.mini)
+            .padding(.vertical, 7)
+    }
+}
+
+private struct InfoRow: View {
+    let title: String, value: String
+    var body: some View {
+        HStack {
+            Text(title).font(.caption)
+            Spacer()
+            Text(value).font(.caption.monospaced()).foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Tabs
 
 private struct GeneralSettings: View {
     @EnvironmentObject var s: Store
@@ -21,80 +92,135 @@ private struct GeneralSettings: View {
     @AppStorage("retrySeconds") private var retry = 10.0
 
     var body: some View {
-        Form {
-            Section("Startup") {
-                Toggle("Launch at login", isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
-                Toggle("Connect to my TV automatically", isOn: $autoConnect)
-                Text("Connects to your favorite TV, or the one you used last.").font(.caption).foregroundStyle(.secondary)
+        VStack(spacing: 14) {
+            Card(title: "Startup") {
+                ToggleRow(title: "Launch at login", isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
+                Divider()
+                ToggleRow(title: "Connect automatically", isOn: $autoConnect)
             }
-            Section("Connection") {
-                Picker("When a TV goes offline, retry every", selection: $retry) {
-                    Text("5 seconds").tag(5.0); Text("10 seconds").tag(10.0)
-                    Text("30 seconds").tag(30.0); Text("1 minute").tag(60.0)
+            Card(title: "Connection") {
+                HStack {
+                    Text("Retry offline TV every").font(.callout)
+                    Spacer()
+                    Picker("", selection: $retry) {
+                        Text("5 s").tag(5.0); Text("10 s").tag(10.0); Text("30 s").tag(30.0); Text("1 min").tag(60.0)
+                    }
+                    .labelsHidden().fixedSize()
                 }
+                .padding(.vertical, 5)
+                Divider()
+                ToggleRow(title: "Notifications", isOn: $notify)
             }
-            Section("Notifications") {
-                Toggle("Notify when a TV connects, disconnects or needs pairing", isOn: $notify)
-            }
-            Section("Keyboard (while the remote is open)") {
-                LabeledContent("Navigate", value: "Arrow keys")
-                LabeledContent("OK / Back", value: "Return / Esc")
-                LabeledContent("Backspace", value: "Delete")
-                LabeledContent("Play/Pause · Mute · Home", value: "Space · M · H")
-                LabeledContent("Volume", value: "+ / −")
+            Card(title: "Keyboard") {
+                InfoRow(title: "Navigate", value: "← ↑ → ↓")
+                InfoRow(title: "OK · Back", value: "⏎ · esc")
+                InfoRow(title: "Backspace", value: "⌫")
+                InfoRow(title: "Play/Pause · Mute · Home", value: "␣ · M · H")
+                InfoRow(title: "Volume", value: "+ / −")
             }
         }
-        .formStyle(.grouped)
     }
 }
 
-private struct DeviceSettings: View {
+private struct LookSettings: View {
+    @AppStorage(AccentStyle.key) private var style = AccentStyle.violet.rawValue
+    @AppStorage(AccentStyle.customKey) private var customHex = ""
+    @AppStorage(AppearanceMode.key) private var mode = AppearanceMode.system.rawValue
+
+    private var customColor: Binding<Color> {
+        Binding(get: { Color(nsColor: AccentStyle.customColor) },
+                set: { customHex = NSColor($0).hex; style = AccentStyle.custom.rawValue })
+    }
+
+    var body: some View {
+        VStack(spacing: 14) {
+            Card(title: "Color theme") {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 10) {
+                    ForEach(AccentStyle.allCases) { swatch($0) }
+                }
+                .padding(.vertical, 10)
+                Divider()
+                ColorPicker(selection: customColor, supportsOpacity: false) { Text("Custom color").font(.callout) }
+                    .padding(.vertical, 6)
+            }
+            Card(title: "Appearance") {
+                Picker("", selection: $mode) {
+                    ForEach(AppearanceMode.allCases) { Text($0.title).tag($0.rawValue) }
+                }
+                .pickerStyle(.segmented).labelsHidden()
+                .padding(.vertical, 8)
+                .onChange(of: mode) { AppearanceMode.apply() }
+            }
+        }
+    }
+
+    func swatch(_ s: AccentStyle) -> some View {
+        let selected = style == s.rawValue
+        let c = s.colors
+        return Button { withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { style = s.rawValue } } label: {
+            VStack(spacing: 4) {
+                Circle()
+                    .fill(LinearGradient(colors: [c.0, c.1], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 30, height: 30)
+                    .overlay {
+                        if selected { Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).foregroundStyle(.white) }
+                    }
+                    .padding(2)
+                    .overlay(Circle().stroke(selected ? c.0 : .clear, lineWidth: 2))
+                    .scaleEffect(selected ? 1.08 : 1)
+                Text(s.title).font(.system(size: 9, weight: .medium)).foregroundStyle(selected ? .primary : .secondary).lineLimit(1)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(s.title) theme")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+private struct TVSettings: View {
     @EnvironmentObject var s: Store
     @State private var confirmReset = false
     @State private var confirmClear = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            if s.known.isEmpty {
-                ContentUnavailableView("No saved TVs", systemImage: "tv.slash",
-                                       description: Text("TVs appear here after you connect to them."))
-            } else {
-                List {
-                    ForEach(s.sortedKnown) { k in
-                        HStack(spacing: 10) {
-                            Button { s.toggleFavorite(k) } label: {
-                                Image(systemName: k.favorite == true ? "star.fill" : "star")
-                                    .foregroundStyle(k.favorite == true ? .yellow : .secondary)
-                                    .contentTransition(.symbolEffect(.replace))
-                            }
-                            .buttonStyle(.plain).help("Favorite (auto-connects first)")
-                            VStack(alignment: .leading, spacing: 2) {
-                                TextField("Name", text: Binding(get: { k.name }, set: { s.rename(k, $0) }))
-                                    .textFieldStyle(.plain).font(.body.weight(.medium))
-                                Text("\(k.tv.kind.rawValue) · \(k.tv.host) · last used ")
-                                    .font(.caption).foregroundStyle(.secondary)
-                                + Text(k.lastUsed, format: .relative(presentation: .named)).font(.caption).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Button(role: .destructive) { s.forget(k) } label: { Image(systemName: "trash") }
-                                .buttonStyle(.borderless).help("Forget this TV")
+        VStack(spacing: 14) {
+            Card(title: "Saved TVs") {
+                if s.known.isEmpty {
+                    Text("TVs appear here after you connect to them.").font(.caption).foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity).padding(.vertical, 14)
+                }
+                ForEach(Array(s.sortedKnown.enumerated()), id: \.element.id) { i, k in
+                    if i > 0 { Divider() }
+                    HStack(spacing: 8) {
+                        Button { s.toggleFavorite(k) } label: {
+                            Image(systemName: k.favorite == true ? "star.fill" : "star")
+                                .foregroundStyle(k.favorite == true ? .yellow : .secondary)
+                                .contentTransition(.symbolEffect(.replace))
                         }
-                        .padding(.vertical, 2)
+                        .buttonStyle(.plain).help("Favorite: connects first")
+                        VStack(alignment: .leading, spacing: 1) {
+                            TextField("Name", text: Binding(get: { k.name }, set: { s.rename(k, $0) }))
+                                .textFieldStyle(.plain).font(.callout.weight(.medium))
+                            Text("\(k.tv.kind.rawValue) · \(k.tv.host)").font(.caption2).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button(role: .destructive) { s.forget(k) } label: { Image(systemName: "trash").font(.caption) }
+                            .buttonStyle(.plain).foregroundStyle(.secondary).help("Forget this TV")
                     }
+                    .padding(.vertical, 7)
                 }
             }
-            Divider()
             HStack {
-                Button("Clear History…") { confirmClear = true }.disabled(s.known.count < 2)
+                Button("Clear History") { confirmClear = true }.disabled(s.known.count < 2)
                 Spacer()
-                Button("Reset Google TV Pairing…") { confirmReset = true }
+                Button("Reset Pairing") { confirmReset = true }
             }
-            .padding(12)
+            .controlSize(.small)
         }
         .confirmationDialog("Forget all TVs except the current one?", isPresented: $confirmClear) {
             Button("Clear History", role: .destructive) { s.clearHistory() }
         }
-        .confirmationDialog("Reset pairing?", isPresented: $confirmReset) {
+        .confirmationDialog("Reset Google TV pairing?", isPresented: $confirmReset) {
             Button("Reset Pairing", role: .destructive) { s.resetPairing() }
         } message: {
             Text("Deletes the pairing certificate from your Keychain. Every Google TV will show a new code to pair again.")
@@ -102,7 +228,7 @@ private struct DeviceSettings: View {
     }
 }
 
-private struct AboutView: View {
+private struct AboutSettings: View {
     var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev" }
     @State private var update: UpdateCheck.Result?
     @State private var checking = false
@@ -110,19 +236,21 @@ private struct AboutView: View {
     var body: some View {
         VStack(spacing: 10) {
             ZStack {
-                RoundedRectangle(cornerRadius: 18).fill(Theme.accent).frame(width: 72, height: 72)
-                Image(systemName: "appletvremote.gen4.fill").font(.system(size: 32)).foregroundStyle(.white)
+                RoundedRectangle(cornerRadius: 16).fill(Theme.accent).frame(width: 60, height: 60)
+                Image(systemName: "appletvremote.gen4.fill").font(.system(size: 26)).foregroundStyle(.white)
             }
-            .shadow(color: Theme.glow.opacity(0.35), radius: 12, y: 4)
-            Text("TCL Remote").font(.title2.weight(.semibold))
-            Text("Version \(version)").font(.callout).foregroundStyle(.secondary)
-            Text("Controls TCL Google TV, Android TV and Roku TV over your local network.\nNo account, no cloud: everything stays on your Wi-Fi.")
+            .shadow(color: Theme.glow.opacity(0.35), radius: 10, y: 4)
+            .padding(.top, 8)
+            Text("TCL Remote").font(.headline)
+            Text("Version \(version)").font(.caption).foregroundStyle(.secondary)
+            Text("Controls TCL Google TV, Android TV and Roku TV over your Wi-Fi. No account, no cloud.")
                 .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
 
             Group {
                 switch update {
                 case .available(let v, let url)?:
-                    HStack {
+                    VStack(spacing: 6) {
                         Text("Version \(v) is available").font(.callout.weight(.medium))
                         Button("Download") { NSWorkspace.shared.open(url) }.buttonStyle(.borderedProminent)
                     }
@@ -136,86 +264,10 @@ private struct AboutView: View {
                     .disabled(checking)
                 }
             }
-            .padding(.top, 6)
-            .transition(.opacity.combined(with: .scale(scale: 0.95)))
+            .padding(.top, 4)
             .animation(.spring, value: update)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-private struct AppearanceSettings: View {
-    @AppStorage(AccentStyle.key) private var style = AccentStyle.violet.rawValue
-    @AppStorage(AccentStyle.customKey) private var customHex = ""
-    @AppStorage(AppearanceMode.key) private var mode = AppearanceMode.system.rawValue
-
-    private var customColor: Binding<Color> {
-        Binding(get: { Color(nsColor: AccentStyle.customColor) },
-                set: { customHex = NSColor($0).hex; style = AccentStyle.custom.rawValue })
-    }
-
-    var body: some View {
-        Form {
-            Section("Color theme") {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 14) {
-                    ForEach(AccentStyle.allCases) { s in swatch(s) }
-                }
-                .padding(.vertical, 6)
-                ColorPicker("Custom color", selection: customColor, supportsOpacity: false)
-            }
-            Section("Appearance") {
-                Picker("Mode", selection: $mode) {
-                    ForEach(AppearanceMode.allCases) { Text($0.title).tag($0.rawValue) }
-                }
-                .pickerStyle(.segmented)
-                .onChange(of: mode) { AppearanceMode.apply() }
-            }
-            Section("Preview") { ThemePreview().frame(maxWidth: .infinity).padding(.vertical, 8) }
-        }
-        .formStyle(.grouped)
-    }
-
-    func swatch(_ s: AccentStyle) -> some View {
-        let selected = style == s.rawValue
-        let c = s.colors
-        return Button { withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { style = s.rawValue } } label: {
-            VStack(spacing: 6) {
-                Circle()
-                    .fill(LinearGradient(colors: [c.0, c.1], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 34, height: 34)
-                    .overlay {
-                        if selected { Image(systemName: "checkmark").font(.system(size: 13, weight: .bold)).foregroundStyle(.white) }
-                    }
-                    .padding(3)
-                    .overlay(Circle().stroke(selected ? c.0 : .clear, lineWidth: 2))
-                    .scaleEffect(selected ? 1.08 : 1)
-                Text(s.title).font(.caption).foregroundStyle(selected ? .primary : .secondary)
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(s.title) theme")
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-}
-
-/// A small slice of the remote so the theme can be judged before closing Settings.
-private struct ThemePreview: View {
-    var body: some View {
-        HStack(spacing: 18) {
-            Image(systemName: "power").font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
-                .frame(width: 34, height: 34).background(Theme.power, in: Circle())
-            ZStack {
-                Circle().fill(Theme.fill).frame(width: 96, height: 96)
-                Text("OK").font(.system(size: 14, weight: .bold, design: .rounded)).foregroundStyle(.white)
-                    .frame(width: 44, height: 44).background(Theme.accent, in: Circle())
-                    .shadow(color: Theme.glow.opacity(0.45), radius: 8, y: 2)
-            }
-            HStack(spacing: 2) {
-                Text("Apps").font(.caption.weight(.semibold)).foregroundStyle(.white)
-                    .padding(.horizontal, 12).padding(.vertical, 5).background(Theme.accent, in: Capsule())
-                Text("Keypad").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.horizontal, 8)
-            }
-            .padding(3).pill(Capsule())
-        }
+        .frame(maxWidth: .infinity)
+        .padding(.bottom, 8)
     }
 }

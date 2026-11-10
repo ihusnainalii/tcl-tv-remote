@@ -47,6 +47,11 @@ public enum ClientIdentity {
         cached = nil
     }
 
+    /// Keychain reads can block on a macOS permission prompt, so never do them on the main thread.
+    static func loadOffMain() async throws -> SecIdentity {
+        try await Task.detached(priority: .userInitiated) { try load() }.value
+    }
+
     static func load() throws -> SecIdentity {
         if let cached { return cached }
         let data = try p12Data()

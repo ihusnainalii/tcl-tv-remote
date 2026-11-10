@@ -17,6 +17,7 @@ struct RootView: View {
                 case .devices: DevicesView().transition(slide(.leading))
                 case .pairing: PairingView().transition(slide(.trailing))
                 case .remote: RemoteView().transition(slide(.trailing))
+                case .settings: SettingsView().transition(slide(.trailing))
                 }
             }
             .frame(maxWidth: .infinity)
@@ -67,7 +68,9 @@ struct Header: View {
                 }
             }
             Spacer()
-            if s.screen == .remote {
+            if s.screen == .settings {
+                Button { s.closeSettings() } label: { icon("xmark") }.buttonStyle(PressStyle()).help("Close Settings")
+            } else if s.screen == .remote {
                 Button { s.showDevices() } label: { icon("list.bullet") }.buttonStyle(PressStyle()).help("TVs")
             } else if s.screen == .devices, s.tv != nil {
                 Button { s.select(s.tv!) } label: { icon("appletvremote.gen4") }.buttonStyle(PressStyle()).help("Remote")
@@ -75,7 +78,7 @@ struct Header: View {
             Menu {
                 Toggle("Launch at Login", isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
                 Button("Find TVs…") { s.showDevices() }
-                Button("Settings…") { AppDelegate.shared?.showSettings() }.keyboardShortcut(",")
+                Button("Settings…") { s.showSettings() }.keyboardShortcut(",")
                 Divider()
                 Button("Quit TCL Remote") { NSApp.terminate(nil) }.keyboardShortcut("q")
             } label: { icon("ellipsis") }

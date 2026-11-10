@@ -8,47 +8,15 @@ struct TCLRemoteApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        Settings { SettingsView().environmentObject(appDelegate.store) }
+        Settings { EmptyView() } // settings live inside the panel
     }
 }
 
 /// Status bar item + popover. Unlike MenuBarExtra, a popover stays anchored to the icon and
 /// resizes itself (animated) to the SwiftUI content's ideal size.
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSWindowDelegate {
-    static private(set) weak var shared: AppDelegate?
+final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     let store = Store()
-    private var settingsWindow: NSWindow?
-
-    override init() {
-        super.init()
-        AppDelegate.shared = self
-    }
-
-    /// SwiftUI's openSettings doesn't work from views hosted in an AppKit popover, so we own the window.
-    func showSettings() {
-        popover.performClose(nil)
-        if settingsWindow == nil {
-            let w = NSWindow(contentViewController: NSHostingController(rootView: SettingsView().environmentObject(store)))
-            w.title = "TCL Remote Settings"
-            w.styleMask = [.titled, .closable, .miniaturizable]
-            w.isReleasedWhenClosed = false
-            w.delegate = self
-            w.center()
-            settingsWindow = w
-        }
-        // A menu bar-only app can't pull a window to the front politely on macOS 14+, so become a
-        // regular app (Dock icon) while Settings is open, then go back to menu bar-only on close.
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-        settingsWindow?.makeKeyAndOrderFront(nil)
-        settingsWindow?.orderFrontRegardless()
-    }
-
-    func windowWillClose(_ notification: Notification) {
-        guard (notification.object as? NSWindow) === settingsWindow else { return }
-        NSApp.setActivationPolicy(.accessory)
-    }
     private var statusItem: NSStatusItem!
     private let popover = NSPopover()
     private var linkObserver: AnyCancellable?
@@ -66,11 +34,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         statusItem.button?.action = #selector(toggle)
         statusItem.button?.target = self
 
-        if CommandLine.arguments.contains("--settings") { showSettings() } // handy for testing
+
 
         linkObserver = store.$link.sink { [weak self] link in
             let name = link == .connected ? "appletvremote.gen4.fill" : "appletvremote.gen4"
             self?.statusItem.button?.image = NSImage(systemSymbolName: name, accessibilityDescription: "TCL Remote")
+        }
+
+        // Testing aid: open the panel on its Settings screen.
+        if CommandLine.arguments.contains("--settings") {
+            store.showSettings()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self.toggle() }
         }
     }
 

@@ -21,7 +21,7 @@ public final class AndroidTVRemote: TVRemote, PairingCapable, StateReporting {
     // Pairing: TV shows a 6-char hex code after this returns.
     public func startPairing() async throws {
         pairConn?.cancel()
-        let c = TLSConn(host: host, port: 6467, identity: try ClientIdentity.load())
+        let c = TLSConn(host: host, port: 6467, identity: try await ClientIdentity.loadOffMain())
         try await c.start()
         pairConn = c
         func step(_ field: Int, _ body: (inout PB) -> Void) async throws {
@@ -38,7 +38,7 @@ public final class AndroidTVRemote: TVRemote, PairingCapable, StateReporting {
         guard let c = pairConn, let serverKey = c.serverKey,
               let server = rsaComponents(serverKey) else { throw TVError.closed }
         var cert: SecCertificate?
-        SecIdentityCopyCertificate(try ClientIdentity.load(), &cert)
+        SecIdentityCopyCertificate(try await ClientIdentity.loadOffMain(), &cert)
         guard let cert, let key = SecCertificateCopyKey(cert), let client = rsaComponents(key) else {
             throw TVError.identity("client key")
         }
@@ -55,7 +55,7 @@ public final class AndroidTVRemote: TVRemote, PairingCapable, StateReporting {
         if conn != nil, active { return }
         conn?.cancel()
         active = false
-        let c = TLSConn(host: host, port: 6466, identity: try ClientIdentity.load())
+        let c = TLSConn(host: host, port: 6466, identity: try await ClientIdentity.loadOffMain())
         conn = c
         try await c.start()
         Task { [weak self] in
