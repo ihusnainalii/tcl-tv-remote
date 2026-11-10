@@ -2,7 +2,7 @@ import Foundation
 
 public enum Key: String, CaseIterable {
     case power, powerOn, powerOff, home, back, exit, menu, settings, info, guide, search, captions
-    case up, down, left, right, ok, backspace
+    case up, down, left, right, ok, enter, backspace
     case volUp, volDown, mute, chUp, chDown
     case playPause, stop, rewind, forward, previous, next
     case tuner, av, hdmi1, hdmi2, hdmi3, hdmi4
@@ -17,7 +17,7 @@ public enum Key: String, CaseIterable {
         case .power: "Power"; case .powerOn: "PowerOn"; case .powerOff: "PowerOff"
         case .home: "Home"; case .back, .exit: "Back"; case .menu, .info, .settings: "Info"
         case .search: "Search"; case .up: "Up"; case .down: "Down"; case .left: "Left"; case .right: "Right"
-        case .ok: "Select"; case .backspace: "Backspace"
+        case .ok: "Select"; case .enter: "Enter"; case .backspace: "Backspace"
         case .volUp: "VolumeUp"; case .volDown: "VolumeDown"; case .mute: "VolumeMute"
         case .chUp: "ChannelUp"; case .chDown: "ChannelDown"; case .playPause: "Play"
         case .rewind: "Rev"; case .forward, .next: "Fwd"; case .previous: "InstantReplay"
@@ -34,7 +34,7 @@ public enum Key: String, CaseIterable {
         return switch self {
         case .power: 26; case .powerOn: 224; case .powerOff: 223; case .home: 3; case .back: 4; case .exit: 111
         case .menu: 82; case .settings: 176; case .info: 165; case .guide: 172; case .search: 84; case .captions: 175
-        case .up: 19; case .down: 20; case .left: 21; case .right: 22; case .ok: 23; case .backspace: 67
+        case .up: 19; case .down: 20; case .left: 21; case .right: 22; case .ok: 23; case .enter: 66; case .backspace: 67
         case .volUp: 24; case .volDown: 25; case .mute: 164; case .chUp: 166; case .chDown: 167
         case .playPause: 85; case .stop: 86; case .rewind: 89; case .forward: 90; case .previous: 88; case .next: 87
         case .tuner: 170; case .av: 247

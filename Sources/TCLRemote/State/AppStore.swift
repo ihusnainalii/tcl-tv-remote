@@ -30,6 +30,7 @@ final class Store: ObservableObject {
     private var failures = 0
     private var retryTask: Task<Void, Never>?
     private var lastVolumeChange = Date.distantPast
+    private var commandChain: Task<Void, Never>?
 
     init(repository: TVRepository = UserDefaultsTVRepository()) {
         self.repository = repository
@@ -232,9 +233,12 @@ final class Store: ObservableObject {
         launchAtLogin = LoginItem.isEnabled
     }
 
+    /// Commands run strictly in order, so fast typing or key repeats never arrive shuffled.
     private func run(_ op: @escaping (TVRemote) async throws -> Void) {
         guard let remote else { return }
-        Task {
+        let previous = commandChain
+        commandChain = Task {
+            await previous?.value
             do {
                 try await op(remote)
                 if link != .connected, let tv { withAnimation(.smooth) { link = .connected }; update { $0.remember(tv) } }

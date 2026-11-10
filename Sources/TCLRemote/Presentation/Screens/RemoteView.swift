@@ -178,16 +178,30 @@ struct RemoteView: View {
         }.buttonStyle(PressStyle())
     }
 
+    /// Live keyboard: whatever changes in the field is mirrored to the TV's focused text box.
     var typer: some View {
-        HStack(spacing: 8) {
-            TextField("Type on TV…", text: $text)
-                .textFieldStyle(.plain).padding(9).pill(RoundedRectangle(cornerRadius: 10))
-                .onSubmit { s.type(text); text = "" }
-            Button { s.type(text); text = "" } label: {
-                Image(systemName: "paperplane.fill").foregroundStyle(.white)
-                    .frame(width: 34, height: 34).background(Theme.accent, in: Circle())
-            }.buttonStyle(PressStyle()).disabled(text.isEmpty)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                TextField("Type on TV…", text: $text)
+                    .textFieldStyle(.plain).padding(9).pill(RoundedRectangle(cornerRadius: 10))
+                    .onChange(of: text) { old, new in mirror(old, new) }
+                    .onSubmit { s.press(.enter); text = "" }
+                Button { s.press(.enter); text = "" } label: {
+                    Image(systemName: "return").font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
+                        .frame(width: 34, height: 34).background(Theme.accent, in: Circle())
+                }
+                .buttonStyle(PressStyle()).help("Send Enter to the TV").accessibilityLabel("Enter")
+            }
+            Text("Open a search or text box on the TV, then type here. Letters appear on the TV as you type; Return sends Enter.")
+                .font(.caption2).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    /// Sends only the difference: backspaces for removed characters, then the added text.
+    private func mirror(_ old: String, _ new: String) {
+        let common = zip(old, new).prefix { $0 == $1 }.count
+        for _ in 0..<(old.count - common) { s.press(.backspace) }
+        s.type(String(new.dropFirst(common)))
     }
 
     func key(_ k: Key, _ icon: String, size: CGFloat = 40, circle: Bool = false) -> some View {

@@ -16,7 +16,29 @@ struct TCLRemoteApp: App {
 /// resizes itself (animated) to the SwiftUI content's ideal size.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
+    static private(set) weak var shared: AppDelegate?
     let store = Store()
+    private var settingsWindow: NSWindow?
+
+    override init() {
+        super.init()
+        AppDelegate.shared = self
+    }
+
+    /// SwiftUI's openSettings doesn't work from views hosted in an AppKit popover, so we own the window.
+    func showSettings() {
+        popover.performClose(nil)
+        if settingsWindow == nil {
+            let w = NSWindow(contentViewController: NSHostingController(rootView: SettingsView().environmentObject(store)))
+            w.title = "TCL Remote Settings"
+            w.styleMask = [.titled, .closable, .miniaturizable]
+            w.isReleasedWhenClosed = false
+            w.center()
+            settingsWindow = w
+        }
+        NSApp.activate()
+        settingsWindow?.makeKeyAndOrderFront(nil)
+    }
     private var statusItem: NSStatusItem!
     private let popover = NSPopover()
     private var linkObserver: AnyCancellable?

@@ -41,7 +41,6 @@ struct RootView: View {
 
 struct Header: View {
     @EnvironmentObject var s: Store
-    @Environment(\.openSettings) private var openSettings
 
     var status: (String, Color) {
         switch s.link {
@@ -75,7 +74,7 @@ struct Header: View {
             Menu {
                 Toggle("Launch at Login", isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
                 Button("Find TVs…") { s.showDevices() }
-                Button("Settings…") { NSApp.activate(); openSettings() }.keyboardShortcut(",")
+                Button("Settings…") { AppDelegate.shared?.showSettings() }.keyboardShortcut(",")
                 Divider()
                 Button("Quit TCL Remote") { NSApp.terminate(nil) }.keyboardShortcut("q")
             } label: { icon("ellipsis") }
