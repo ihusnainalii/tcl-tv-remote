@@ -10,6 +10,10 @@ A menu bar remote for TCL TVs. It finds TVs on your network, remembers them, and
 - Remembers TVs with "last used", auto-connects to the last one on launch and whenever the Mac rejoins a network, and follows the TV to a new IP if DHCP moves it, retries every 10 s while offline and reconnects after sleep
 - Power (toggle, on, off), guide, exit, captions, stop/next/previous, D-pad/OK, back, home, menu/settings, info, search, volume, mute, channels, media keys, HDMI 1–4 / AV / Live TV input, live volume level (Google TV), number pad
 - Type text on the TV, launch apps (Roku lists installed apps; Google TV has common shortcuts)
+- Hold arrows, volume or channel buttons to repeat
+- Favorite and rename TVs (favorite auto-connects first); favorite, recent and custom app shortcuts with search
+- macOS notifications when a TV disconnects, reconnects or needs pairing
+- Settings window (⋯ → Settings…, or ⌘,): launch at login, auto-connect, retry interval, notifications, saved TVs, reset pairing
 - Keyboard: arrows, Return = OK, Delete = Backspace, Esc = Back, Space = Play/Pause, `+`/`-` volume, `m` mute, `h` home
 
 ## Build & run

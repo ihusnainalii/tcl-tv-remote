@@ -8,7 +8,7 @@ struct TV: Codable, Hashable, Identifiable {
     var id: String { "\(kind.rawValue)-\(host)" }
 }
 
-struct TVApp: Hashable, Identifiable {
+struct TVApp: Hashable, Identifiable, Codable {
     var id: String   // Roku app id, or Android TV app link
     var name: String
 }

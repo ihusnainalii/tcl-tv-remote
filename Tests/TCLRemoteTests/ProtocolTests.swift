@@ -16,6 +16,15 @@ final class ProtocolTests: XCTestCase {
         XCTAssertEqual(Key.n0.android, 7); XCTAssertEqual(Key.next.android, 87); XCTAssertNil(Key.next.digit)
     }
 
+    func testOldSavedTVsStillDecode() throws {
+        let old = #"[{"tv":{"name":"Living Room","host":"10.0.0.5","kind":"Google TV"},"lastUsed":0}]"#
+        let k = try JSONDecoder().decode([KnownTV].self, from: Data(old.utf8))[0]
+        XCTAssertEqual(k.name, "Living Room")
+        XCTAssertNil(k.favorite)
+        var renamed = k; renamed.nickname = "Bedroom"
+        XCTAssertEqual(renamed.name, "Bedroom")
+    }
+
     func testRSAComponentsStripsLeadingZero() {
         // SEQUENCE { INTEGER 00 C0 FF, INTEGER 01 00 01 }
         let der = Data([0x30, 0x0A, 0x02, 0x03, 0x00, 0xC0, 0xFF, 0x02, 0x03, 0x01, 0x00, 0x01])

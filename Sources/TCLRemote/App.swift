@@ -11,6 +11,8 @@ struct TCLRemoteApp: App {
             Image(systemName: store.link == .connected ? "appletvremote.gen4.fill" : "appletvremote.gen4")
         }
         .menuBarExtraStyle(.window)
+
+        Settings { SettingsView().environmentObject(store) }
     }
 }
 
@@ -44,7 +46,40 @@ struct PressStyle: ButtonStyle {
     }
 }
 
+/// Fires once on press, then repeats while held (D-pad, volume, channel).
+private struct RepeatPress: ViewModifier {
+    let action: () -> Void
+    @State private var task: Task<Void, Never>?
+    @State private var hover = false
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(task != nil ? 0.88 : hover ? 1.04 : 1)
+            .brightness(task != nil ? 0.12 : hover ? 0.04 : 0)
+            .animation(Theme.spring, value: task != nil)
+            .animation(.easeOut(duration: 0.15), value: hover)
+            .onHover { hover = $0 }
+            .gesture(DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    guard task == nil else { return }
+                    action()
+                    task = Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(400))
+                        while !Task.isCancelled {
+                            action()
+                            try? await Task.sleep(for: .milliseconds(110))
+                        }
+                    }
+                }
+                .onEnded { _ in task?.cancel(); task = nil })
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { action() }
+    }
+}
+
 extension View {
+    func repeatPress(_ action: @escaping () -> Void) -> some View { modifier(RepeatPress(action: action)) }
+
     func pill<S: Shape>(_ shape: S) -> some View {
         background(Theme.fill, in: shape).overlay(shape.stroke(Theme.stroke, lineWidth: 0.5))
     }
@@ -89,6 +124,7 @@ struct RootView: View {
 
 struct Header: View {
     @EnvironmentObject var s: Store
+    @Environment(\.openSettings) private var openSettings
 
     var status: (String, Color) {
         switch s.link {
@@ -107,7 +143,7 @@ struct Header: View {
                 Image(systemName: "tv").font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(s.tv?.name ?? "TCL Remote").font(.headline).lineLimit(1)
+                Text(s.displayName).font(.headline).lineLimit(1).contentTransition(.opacity)
                 HStack(spacing: 5) {
                     StatusDot(color: status.1, pulsing: s.link == .connecting || s.link == .connected)
                     Text(status.0).font(.caption).foregroundStyle(.secondary).contentTransition(.opacity)
@@ -122,6 +158,7 @@ struct Header: View {
             Menu {
                 Toggle("Launch at Login", isOn: Binding(get: { s.launchAtLogin }, set: { s.setLaunchAtLogin($0) }))
                 Button("Find TVs…") { s.showDevices() }
+                Button("Settings…") { NSApp.activate(); openSettings() }.keyboardShortcut(",")
                 Divider()
                 Button("Quit TCL Remote") { NSApp.terminate(nil) }.keyboardShortcut("q")
             } label: { icon("ellipsis") }
@@ -161,6 +198,8 @@ struct DevicesView: View {
     @State private var manualIP = ""
     @State private var manualKind: TV.Kind = .androidTV
     @State private var showManual = false
+    @State private var renaming: KnownTV?
+    @State private var newName = ""
 
     var body: some View {
         VStack(spacing: 12) {
@@ -170,10 +209,16 @@ struct DevicesView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     if !s.known.isEmpty {
                         section("Recent")
-                        ForEach(s.known) { k in
-                            DeviceRow(tv: k.tv, subtitle: Text("Last used ") + Text(k.lastUsed, format: .relative(presentation: .named)),
+                        ForEach(s.sortedKnown) { k in
+                            DeviceRow(tv: k.tv, title: k.name, favorite: k.favorite == true,
+                                      subtitle: Text("Last used ") + Text(k.lastUsed, format: .relative(presentation: .named)),
                                       online: s.isOnline(k.tv), current: s.tv?.id == k.id) { s.select(k.tv) }
-                                .contextMenu { Button("Forget", role: .destructive) { s.forget(k) } }
+                                .contextMenu {
+                                    Button(k.favorite == true ? "Remove from Favorites" : "Add to Favorites") { s.toggleFavorite(k) }
+                                    Button("Rename…") { newName = k.name; renaming = k }
+                                    Divider()
+                                    Button("Forget", role: .destructive) { s.forget(k) }
+                                }
                         }
                     }
                     if !s.newTVs.isEmpty {
@@ -228,6 +273,11 @@ struct DevicesView: View {
                 }.buttonStyle(PressStyle()).disabled(s.scanning)
             }
         }
+        .alert("Rename TV", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+            TextField("Name", text: $newName)
+            Button("Save") { if let k = renaming { s.rename(k, newName) } }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 
     func section(_ title: String) -> some View {
@@ -238,6 +288,8 @@ struct DevicesView: View {
 
 struct DeviceRow: View {
     let tv: TV
+    var title: String? = nil
+    var favorite = false
     let subtitle: Text
     let online: Bool
     let current: Bool
@@ -251,7 +303,13 @@ struct DeviceRow: View {
                     .background(current ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Theme.fill), in: RoundedRectangle(cornerRadius: 9))
                     .foregroundStyle(current ? .white : .primary)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(tv.name).font(.callout.weight(.medium)).lineLimit(1)
+                    HStack(spacing: 4) {
+                        Text(title ?? tv.name).font(.callout.weight(.medium)).lineLimit(1)
+                        if favorite {
+                            Image(systemName: "star.fill").font(.system(size: 9)).foregroundStyle(.yellow)
+                                .transition(.scale.combined(with: .opacity)).accessibilityLabel("Favorite")
+                        }
+                    }
                     subtitle.font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
                 Spacer()
@@ -569,12 +627,10 @@ struct DPad: View {
                 .shadow(color: .purple.opacity(0.7), radius: 6)
 
             ForEach(dirs, id: \.0) { k, icon, a in
-                Button { press(k, a) } label: {
-                    Image(systemName: icon).font(.system(size: 16, weight: .bold))
-                        .frame(width: 48, height: 48).contentShape(Rectangle())
-                }
-                .buttonStyle(PressStyle())
-                .accessibilityLabel(k.label)
+                Image(systemName: icon).font(.system(size: 16, weight: .bold))
+                    .frame(width: 48, height: 48).contentShape(Rectangle())
+                    .repeatPress { press(k, a) }
+                    .accessibilityLabel(k.label)
                 .offset(x: cos(a * .pi / 180) * 62, y: sin(a * .pi / 180) * 62)
             }
 
@@ -604,11 +660,11 @@ struct Rocker: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Button { s.press(up) } label: { Image(systemName: upIcon).frame(width: 46, height: 38).contentShape(Rectangle()) }
-                .buttonStyle(PressStyle()).accessibilityLabel(up.label)
+            Image(systemName: upIcon).frame(width: 46, height: 38).contentShape(Rectangle())
+                .repeatPress { s.press(up) }.accessibilityLabel(up.label)
             Text(label).font(.system(size: 9, weight: .bold)).foregroundStyle(.secondary)
-            Button { s.press(down) } label: { Image(systemName: downIcon).frame(width: 46, height: 38).contentShape(Rectangle()) }
-                .buttonStyle(PressStyle()).accessibilityLabel(down.label)
+            Image(systemName: downIcon).frame(width: 46, height: 38).contentShape(Rectangle())
+                .repeatPress { s.press(down) }.accessibilityLabel(down.label)
         }
         .font(.system(size: 13, weight: .semibold))
         .pill(Capsule())
@@ -618,39 +674,105 @@ struct Rocker: View {
 struct AppsGrid: View {
     @EnvironmentObject var s: Store
     @State private var shown = false
+    @State private var query = ""
+    @State private var adding = false
+    @State private var newName = ""
+    @State private var newID = ""
+
+    var apps: [TVApp] {
+        query.isEmpty ? s.displayedApps : s.displayedApps.filter { $0.name.localizedCaseInsensitiveContains(query) }
+    }
 
     var body: some View {
-        if s.apps.isEmpty {
-            Text(s.link == .connected ? "No apps" : "Connect to see apps").font(.caption).foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, minHeight: 60)
-        } else {
-            ScrollView {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-                    ForEach(Array(s.apps.enumerated()), id: \.element.id) { i, app in
-                        Button { s.launch(app) } label: {
-                            VStack(spacing: 5) {
-                                Text(String(app.name.prefix(1)))
-                                    .font(.system(size: 17, weight: .bold, design: .rounded)).foregroundStyle(.white)
-                                    .frame(width: 38, height: 38)
-                                    .background(tint(app.name).gradient, in: RoundedRectangle(cornerRadius: 10))
-                                Text(app.name).font(.system(size: 10, weight: .medium)).lineLimit(1)
-                            }
-                            .frame(maxWidth: .infinity).padding(.vertical, 6)
+        VStack(spacing: 8) {
+            if s.displayedApps.count > 9 {
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass").font(.caption).foregroundStyle(.secondary)
+                    TextField("Search apps", text: $query).textFieldStyle(.plain).font(.caption)
+                }
+                .padding(7).pill(RoundedRectangle(cornerRadius: 8))
+            }
+            if s.link != .connected && s.displayedApps.isEmpty {
+                Text("Connect to see apps").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 60)
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                        ForEach(Array(apps.enumerated()), id: \.element.id) { i, app in
+                            tile(app)
+                                .scaleEffect(shown ? 1 : 0.6).opacity(shown ? 1 : 0)
+                                .animation(.spring(response: 0.45, dampingFraction: 0.7).delay(Double(min(i, 12)) * 0.03), value: shown)
                         }
-                        .buttonStyle(PressStyle())
-                        .scaleEffect(shown ? 1 : 0.6).opacity(shown ? 1 : 0)
-                        .animation(.spring(response: 0.45, dampingFraction: 0.7).delay(Double(min(i, 12)) * 0.03), value: shown)
+                        if query.isEmpty { addTile }
                     }
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: apps)
+                }
+                .frame(maxHeight: 170)
+            }
+        }
+        .onAppear { shown = true }
+    }
+
+    func tile(_ app: TVApp) -> some View {
+        Button { s.launch(app) } label: {
+            VStack(spacing: 5) {
+                Text(String(app.name.prefix(1)))
+                    .font(.system(size: 17, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                    .frame(width: 38, height: 38)
+                    .background(tint(app.name).gradient, in: RoundedRectangle(cornerRadius: 10))
+                    .overlay(alignment: .topTrailing) {
+                        if s.isFavorite(app) {
+                            Image(systemName: "star.fill").font(.system(size: 8)).foregroundStyle(.yellow)
+                                .padding(3).background(.regularMaterial, in: Circle()).offset(x: 5, y: -5)
+                                .transition(.scale)
+                        }
+                    }
+                Text(app.name).font(.system(size: 10, weight: .medium)).lineLimit(1)
+            }
+            .frame(maxWidth: .infinity).padding(.vertical, 6)
+        }
+        .buttonStyle(PressStyle())
+        .accessibilityLabel("Open \(app.name)")
+        .contextMenu {
+            Button(s.isFavorite(app) ? "Remove from Favorites" : "Add to Favorites") { s.toggleFavorite(app) }
+            if s.isCustom(app) { Button("Remove Shortcut", role: .destructive) { s.removeCustomApp(app) } }
+        }
+    }
+
+    var addTile: some View {
+        Button { adding = true } label: {
+            VStack(spacing: 5) {
+                Image(systemName: "plus").font(.system(size: 15, weight: .semibold))
+                    .frame(width: 38, height: 38)
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [3])))
+                    .foregroundStyle(.secondary)
+                Text("Shortcut").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity).padding(.vertical, 6)
+        }
+        .buttonStyle(PressStyle())
+        .accessibilityLabel("Add app shortcut")
+        .popover(isPresented: $adding, arrowEdge: .bottom) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("New shortcut").font(.headline)
+                TextField("Name", text: $newName)
+                TextField(s.tv?.kind == .roku ? "Roku app ID, e.g. 12" : "App link, e.g. https://www.twitch.tv", text: $newID)
+                HStack {
+                    Spacer()
+                    Button("Cancel") { adding = false }
+                    Button("Add") {
+                        s.addCustomApp(name: newName, id: newID)
+                        newName = ""; newID = ""; adding = false
+                    }
+                    .buttonStyle(.borderedProminent).disabled(newName.isEmpty || newID.isEmpty)
                 }
             }
-            .frame(maxHeight: 170)
-            .onAppear { shown = true }
+            .textFieldStyle(.roundedBorder).padding(14).frame(width: 260)
         }
     }
 
     func tint(_ name: String) -> Color {
         let known: [String: Color] = ["Netflix": .red, "YouTube": .red, "Spotify": .green, "Prime Video": .cyan,
-                                      "Disney+": .blue, "Max": .indigo, "Hulu": .green, "Plex": .orange]
+                                      "Disney+": .blue, "Max": .indigo, "Hulu": .green, "Plex": .orange, "Apple TV": .gray]
         if let c = known[name] { return c }
         let palette: [Color] = [.blue, .purple, .pink, .orange, .teal, .indigo, .mint]
         return palette[abs(name.unicodeScalars.reduce(0) { $0 &+ Int($1.value) }) % palette.count]
