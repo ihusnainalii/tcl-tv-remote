@@ -101,6 +101,8 @@ private struct DeviceSettings: View {
 
 private struct AboutView: View {
     var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev" }
+    @State private var update: UpdateCheck.Result?
+    @State private var checking = false
 
     var body: some View {
         VStack(spacing: 10) {
@@ -113,7 +115,50 @@ private struct AboutView: View {
             Text("Version \(version)").font(.callout).foregroundStyle(.secondary)
             Text("Controls TCL Google TV, Android TV and Roku TV over your local network.\nNo account, no cloud: everything stays on your Wi-Fi.")
                 .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
+
+            Group {
+                switch update {
+                case .available(let v, let url)?:
+                    HStack {
+                        Text("Version \(v) is available").font(.callout.weight(.medium))
+                        Button("Download") { NSWorkspace.shared.open(url) }.buttonStyle(.borderedProminent)
+                    }
+                case .upToDate?: Label("You're up to date", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                case .failed(let msg)?: Text(msg).font(.caption).foregroundStyle(.secondary)
+                case nil:
+                    Button(checking ? "Checking…" : "Check for Updates") {
+                        checking = true
+                        Task { update = await UpdateCheck.run(current: version); checking = false }
+                    }
+                    .disabled(checking)
+                }
+            }
+            .padding(.top, 6)
+            .transition(.opacity.combined(with: .scale(scale: 0.95)))
+            .animation(.spring, value: update)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// Compares the running version with the latest GitHub release.
+enum UpdateCheck {
+    static let repo = "ihusnainalii/tcl-tv-remote"
+
+    enum Result: Equatable { case available(String, URL), upToDate, failed(String) }
+
+    static func run(current: String) async -> Result {
+        let url = URL(string: "https://api.github.com/repos/\(repo)/releases/latest")!
+        guard let (data, resp) = try? await URLSession.shared.data(from: url) else { return .failed("Couldn't reach GitHub") }
+        guard (resp as? HTTPURLResponse)?.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let tag = json["tag_name"] as? String,
+              let page = (json["html_url"] as? String).flatMap(URL.init(string:)) else { return .failed("No releases published yet") }
+        return isNewer(tag, than: current) ? .available(tag.trimmingCharacters(in: ["v"]), page) : .upToDate
+    }
+
+    static func isNewer(_ tag: String, than current: String) -> Bool {
+        let t = tag.trimmingCharacters(in: ["v"]), c = current.trimmingCharacters(in: ["v"])
+        return t.compare(c, options: .numeric) == .orderedDescending
     }
 }

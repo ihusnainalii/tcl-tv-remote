@@ -18,10 +18,17 @@ A menu bar remote for TCL TVs. It finds TVs on your network, remembers them, and
 
 ## Build & run
 ```bash
-./build.sh
-open "build/TCL Remote.app"
+./scripts/build.sh
+open "build/TCL Remote.app"   # or scripts/make-dmg.sh for an installer
 ```
 Requires macOS 15+ and Xcode. Allow **Local Network** access when macOS asks.
+
+## Distribution
+- `scripts/build.sh` builds a universal (Apple Silicon + Intel) app. Set `VERSION=1.2.0` to stamp the version and `SIGN_IDENTITY="Developer ID Application: …"` to sign with hardened runtime (ad-hoc otherwise).
+- `scripts/make-dmg.sh` packages `build/TCLRemote-<version>.dmg`. Set `NOTARY_PROFILE` (from `xcrun notarytool store-credentials`) to notarize and staple.
+- CI (`.github/workflows/ci.yml`) runs tests with coverage and builds the app on every PR and push to `main`.
+- Releases (`.github/workflows/release.yml`): push a tag like `v1.1.0` and GitHub builds the DMG and publishes a release. Signing and notarization run when these repo secrets exist: `MACOS_CERT_P12` (base64 Developer ID .p12), `MACOS_CERT_PASSWORD`, `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD`.
+- Settings → About → **Check for Updates** compares against the latest GitHub release (works once the repo is public).
 
 ## Notes
 - The Google TV pairing certificate is stored in the macOS Keychain (item "TCL Remote pairing certificate"). Delete it to re-pair from scratch.

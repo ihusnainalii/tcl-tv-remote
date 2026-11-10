@@ -16,6 +16,12 @@ final class ProtocolTests: XCTestCase {
         XCTAssertEqual(Key.n0.android, 7); XCTAssertEqual(Key.next.android, 87); XCTAssertNil(Key.next.digit)
     }
 
+    func testUpdateVersionCompare() {
+        XCTAssertTrue(UpdateCheck.isNewer("v1.10.0", than: "1.9.2"))
+        XCTAssertFalse(UpdateCheck.isNewer("v1.0", than: "1.0"))
+        XCTAssertFalse(UpdateCheck.isNewer("v0.9", than: "1.0"))
+    }
+
     func testOldSavedTVsStillDecode() throws {
         let old = #"[{"tv":{"name":"Living Room","host":"10.0.0.5","kind":"Google TV"},"lastUsed":0}]"#
         let k = try JSONDecoder().decode([KnownTV].self, from: Data(old.utf8))[0]

@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test
+        run: swift test --enable-code-coverage
+      - name: Coverage summary
+        run: |
+          PROF=$(swift test --show-codecov-path | sed 's/json$/profdata/;s/[^/]*$/default.profdata/')
+          BIN=$(find .build -path '*TCLRemotePackageTests.xctest/Contents/MacOS/*' -type f | head -1)
+          xcrun llvm-cov report "$BIN" -instr-profile "$PROF" -ignore-filename-regex='Tests|\.build' | tail -1 || true
+      - name: Build universal app
+        run: scripts/build.sh
