@@ -9,18 +9,33 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  COVERAGE_MIN: 35   # TVKit line coverage floor; raise it as tests are added
+
 jobs:
   test:
     runs-on: macos-15
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+
       - name: Test
-        run: swift test --enable-code-coverage
-      - name: Coverage summary
-        run: |
-          PROF=$(swift test --show-codecov-path | sed 's/json$/profdata/;s/[^/]*$/default.profdata/')
-          BIN=$(find .build -path '*TCLRemotePackageTests.xctest/Contents/MacOS/*' -type f | head -1)
-          xcrun llvm-cov report "$BIN" -instr-profile "$PROF" -ignore-filename-regex='Tests|\.build' | tail -1 || true
+        run: swift test --parallel --enable-code-coverage --xunit-output .build/tests.xml
+
+      - name: Report test results
+        if: always()   # annotate failures on the PR even when tests fail
+        run: python3 scripts/ci_report.py tests .build/tests.xml .build/tests-swift-testing.xml
+
+      - name: Coverage gate
+        run: python3 scripts/ci_report.py coverage "$(swift test --show-codecov-path)" --min "$COVERAGE_MIN"
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: .build/tests*.xml
+          if-no-files-found: ignore
+
       - name: Build universal app
         run: scripts/build.sh
