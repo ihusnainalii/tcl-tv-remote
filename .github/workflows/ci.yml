@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  COVERAGE_MIN: 35   # TVKit line coverage floor; raise it as tests are added
+  COVERAGE_MIN: 90   # TVKit line coverage floor (currently ~97%)
 
 jobs:
   test:
