@@ -5,7 +5,7 @@ import TVKit
 
 struct RemoteView: View {
     @EnvironmentObject var s: Store
-    @State private var tab = Tab.apps
+    @AppStorage("remoteTab") private var tab = Tab.apps // remembered between opens
     @State private var text = ""
     @FocusState private var focused: Bool
     @Namespace private var ns

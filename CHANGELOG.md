@@ -15,3 +15,5 @@ All notable changes to this project are listed here. The format follows [Keep a 
 - Settings inside the panel; color themes, a custom color and Light/Dark mode; launch at login; notifications.
 - Universal build script, DMG packaging, CI and tagged release workflows, and Check for Updates.
 - Clean two-module architecture (TVKit core and app) with unit tests and an opt-in live-TV test.
+- Test suite with a fake Google TV, stubbed HTTP, local discovery responders and a test-only Keychain item; CI requires 90% TVKit coverage and no failing tests, and marks failed tests on pull requests.
+- App icon, README screenshots and launch options for opening the panel at launch.
