@@ -8,6 +8,8 @@ struct DevicesView: View {
     @State private var manualIP = ""
     @State private var manualKind: TV.Kind = .androidTV
     @State private var showManual = false
+    /// iOS draws its own full-width Scan / Add by IP buttons, so it hides these compact ones.
+    var showsActions = true
     @State private var renaming: KnownTV?
     @State private var newName = ""
 
@@ -71,7 +73,7 @@ struct DevicesView: View {
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
 
-            HStack {
+            if showsActions { HStack {
                 Button { withAnimation(.spring) { showManual.toggle() } } label: {
                     Label(showManual ? L10n.Devices.hide : L10n.Devices.addByIP, systemImage: showManual ? "chevron.up" : "plus")
                         .font(.caption.weight(.medium)).padding(.horizontal, 10).padding(.vertical, 6).pill(Capsule())
@@ -83,7 +85,7 @@ struct DevicesView: View {
                         .font(.caption.weight(.semibold)).foregroundStyle(.white)
                         .padding(.horizontal, 12).padding(.vertical, 6).background(Theme.accent, in: Capsule())
                 }.buttonStyle(PressStyle()).disabled(s.scanning)
-            }
+            } }
         }
         .alert(L10n.Devices.renameTitle, isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
             TextField(L10n.Common.name, text: $newName)

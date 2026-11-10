@@ -136,8 +136,38 @@ struct NoTVView: View {
                 .containerRelativeFrame(.vertical) // centred in the scroll area
                 .sheet(isPresented: $addingIP) { AddByIPSheet().environmentObject(s).presentationDetents([.height(300)]) }
         } else {
-            DevicesView().frame(maxWidth: 560).frame(maxWidth: .infinity).padding(.top, 8)
+            VStack(spacing: 24) {
+                DevicesView(showsActions: false)
+                actions
+            }
+            .frame(maxWidth: 560).frame(maxWidth: .infinity).padding(.top, 8)
+            .sheet(isPresented: $addingIP) { AddByIPSheet().environmentObject(s).presentationDetents([.height(300)]) }
         }
+    }
+
+    /// Full-width primary Scan and secondary Add by IP, shared by the empty state and the TV list.
+    private var actions: some View {
+        VStack(spacing: 12) {
+            Button { s.scan() } label: {
+                HStack(spacing: 8) {
+                    if s.scanning { ProgressView().tint(.white) } else { Image(systemName: "dot.radiowaves.left.and.right") }
+                    Text(s.scanning ? L10n.Devices.scanning : L10n.Mobile.scanForTVs)
+                }
+                .font(.headline).foregroundStyle(.white)
+                .frame(maxWidth: .infinity).frame(height: 54)
+                .background(Theme.accent, in: Capsule())
+            }
+            .buttonStyle(PressStyle(hoverScale: 1, pressScale: 0.97))
+            .disabled(s.scanning)
+
+            Button { addingIP = true } label: {
+                Label(L10n.Devices.addByIP, systemImage: "plus").font(.headline)
+                    .frame(maxWidth: .infinity).frame(height: 54)
+                    .background(.fill.tertiary, in: Capsule())
+            }
+            .buttonStyle(PressStyle(hoverScale: 1, pressScale: 0.97))
+        }
+        .frame(maxWidth: 360)
     }
 
     private var emptyState: some View {
@@ -160,28 +190,7 @@ struct NoTVView: View {
             }
             .contentTransition(.opacity)
 
-            VStack(spacing: 12) {
-                Button { s.scan() } label: {
-                    HStack(spacing: 8) {
-                        if s.scanning { ProgressView().tint(.white) } else { Image(systemName: "dot.radiowaves.left.and.right") }
-                        Text(s.scanning ? L10n.Devices.scanning : L10n.Mobile.scanForTVs)
-                    }
-                    .font(.headline).foregroundStyle(.white)
-                    .frame(maxWidth: .infinity).frame(height: 54)
-                    .background(Theme.accent, in: Capsule())
-                }
-                .buttonStyle(PressStyle(hoverScale: 1, pressScale: 0.97))
-                .disabled(s.scanning)
-
-                Button { addingIP = true } label: {
-                    Label(L10n.Devices.addByIP, systemImage: "plus").font(.headline)
-                        .frame(maxWidth: .infinity).frame(height: 54)
-                        .background(.fill.tertiary, in: Capsule())
-                }
-                .buttonStyle(PressStyle(hoverScale: 1, pressScale: 0.97))
-            }
-            .frame(maxWidth: 360)
-            .padding(.top, 10)
+            actions.padding(.top, 10)
         }
         .padding(.horizontal, 12)
         .frame(maxWidth: 480)
