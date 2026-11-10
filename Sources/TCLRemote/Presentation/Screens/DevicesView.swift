@@ -144,7 +144,7 @@ struct Radar: View {
                         .scaleEffect(0.2 + p * 0.8).opacity(1 - p)
                 }
                 Circle().fill(Theme.accent).frame(width: 14, height: 14)
-                    .shadow(color: .purple.opacity(0.6), radius: 8)
+                    .shadow(color: Theme.glow.opacity(0.6), radius: 8)
             }
         }
         .accessibilityLabel("Scanning for TVs")

@@ -44,6 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var linkObserver: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AppearanceMode.apply()
         let host = NSHostingController(rootView: RootView().environmentObject(store))
         host.sizingOptions = [.preferredContentSize]
         popover.contentViewController = host

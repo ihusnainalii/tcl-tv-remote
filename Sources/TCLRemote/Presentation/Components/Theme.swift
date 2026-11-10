@@ -4,8 +4,12 @@ import TVKit
 // MARK: - Theme
 
 enum Theme {
-    static let accent = LinearGradient(colors: [Color(red: 0.38, green: 0.45, blue: 1), Color(red: 0.66, green: 0.36, blue: 1)],
-                                       startPoint: .topLeading, endPoint: .bottomTrailing)
+    /// Current accent, read from Settings > Appearance. Views re-render via `.themed()` when it changes.
+    static var accent: LinearGradient {
+        let c = AccentStyle.current.colors
+        return LinearGradient(colors: [c.0, c.1], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+    static var glow: Color { AccentStyle.current.colors.1 }
     static let power = LinearGradient(colors: [Color(red: 1, green: 0.38, blue: 0.38), Color(red: 0.86, green: 0.15, blue: 0.3)],
                                       startPoint: .top, endPoint: .bottom)
     static let fill = Color.primary.opacity(0.07)

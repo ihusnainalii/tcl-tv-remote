@@ -25,6 +25,7 @@ struct RootView: View {
         .padding(16)
         .frame(width: 300)
         .fixedSize(horizontal: false, vertical: true) // popover sizes itself to this ideal height
+        .themed()
         .overlay(alignment: .bottom) {
             if let t = s.toast {
                 Text(t)

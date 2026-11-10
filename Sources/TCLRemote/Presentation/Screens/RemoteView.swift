@@ -234,7 +234,7 @@ struct DPad: View {
                 .padding(4)
                 .rotationEffect(.degrees(angle - 32.4))
                 .opacity(glow)
-                .shadow(color: .purple.opacity(0.7), radius: 6)
+                .shadow(color: Theme.glow.opacity(0.7), radius: 6)
 
             ForEach(dirs, id: \.0) { k, icon, a in
                 Image(systemName: icon).font(.system(size: 16, weight: .bold))
@@ -247,7 +247,7 @@ struct DPad: View {
             Button { s.press(.ok) } label: {
                 Text("OK").font(.system(size: 15, weight: .bold, design: .rounded)).foregroundStyle(.white)
                     .frame(width: 66, height: 66).background(Theme.accent, in: Circle())
-                    .shadow(color: .purple.opacity(0.45), radius: 10, y: 3)
+                    .shadow(color: Theme.glow.opacity(0.45), radius: 10, y: 3)
             }.buttonStyle(PressStyle())
         }
         .frame(width: 176, height: 176)
