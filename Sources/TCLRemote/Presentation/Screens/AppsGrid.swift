@@ -25,7 +25,7 @@ struct AppsGrid: View {
             if s.link != .connected && s.displayedApps.isEmpty {
                 Text("Connect to see apps").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 60)
             } else {
-                FitScroll(maxHeight: 190) {
+                FitScroll(maxHeight: 220) {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
                         ForEach(Array(apps.enumerated()), id: \.element.id) { i, app in
                             tile(app)
@@ -57,7 +57,7 @@ struct AppsGrid: View {
                     }
                 Text(app.name).font(.system(size: 10, weight: .medium)).lineLimit(1)
             }
-            .frame(maxWidth: .infinity).padding(.vertical, 6)
+            .frame(maxWidth: .infinity, minHeight: 68, maxHeight: 68)
         }
         .buttonStyle(PressStyle())
         .accessibilityLabel("Open \(app.name)")
@@ -76,7 +76,7 @@ struct AppsGrid: View {
                     .foregroundStyle(.secondary)
                 Text("Shortcut").font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity).padding(.vertical, 6)
+            .frame(maxWidth: .infinity, minHeight: 68, maxHeight: 68)
         }
         .buttonStyle(PressStyle())
         .accessibilityLabel("Add app shortcut")

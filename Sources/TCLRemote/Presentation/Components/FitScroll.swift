@@ -13,5 +13,12 @@ struct FitScroll<Content: View>: View {
         .scrollIndicators(.never)
         .scrollBounceBehavior(.basedOnSize)
         .frame(height: min(height, maxHeight))
+        // Fade the bottom edge when there's more to scroll, so a cut-off row reads as "scroll me".
+        .mask {
+            LinearGradient(stops: [.init(color: .black, location: 0),
+                                   .init(color: .black, location: height > maxHeight ? 0.82 : 1),
+                                   .init(color: height > maxHeight ? .clear : .black, location: 1)],
+                           startPoint: .top, endPoint: .bottom)
+        }
     }
 }
