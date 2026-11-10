@@ -194,3 +194,16 @@
 "onboarding.control.body" = "Use the big arrow pad, or switch to the touchpad: swipe to move, tap to select. Volume, channels and media are right below.";
 "onboarding.apps.title" = "Apps and typing";
 "onboarding.apps.body" = "Open Netflix, YouTube and more in one tap, and type searches with your keyboard instead of the arrows.";
+
+/* Errors: what happened and what to do */
+"error.generic" = "Something went wrong. Please try again.";
+"error.notResponding" = "The TV didn't respond. Make sure it's on and on the same Wi-Fi.";
+"error.connectionLost" = "Lost the connection to the TV.";
+"error.refused" = "The TV declined the request.";
+"error.badCode" = "That code didn't match. Check the code on the TV and try again.";
+"error.certificate" = "Couldn't set up secure pairing. Try Settings, TVs, Reset Pairing.";
+"error.secureConnection" = "The secure connection failed. Pair this TV again.";
+"error.unreachable" = "Can't reach the TV. Make sure it's on and on the same Wi-Fi.";
+"error.connectionRefused" = "The TV refused the connection. It may need pairing again.";
+"error.noWifi" = "You're not connected to Wi-Fi.";
+"error.localNetwork" = "TCL Remote needs Local Network access. Turn it on in Settings, Privacy & Security, Local Network.";

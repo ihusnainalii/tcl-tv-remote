@@ -76,7 +76,8 @@ struct ConnectionBanner: View {
             card(icon: "link.badge.plus", title: L10n.Remote.PairCard.title, subtitle: L10n.Remote.PairCard.subtitle,
                  action: L10n.Pairing.pair) { s.beginPairing() }
         case .failed:
-            card(icon: "wifi.exclamationmark", title: L10n.Remote.OfflineCard.title, subtitle: L10n.Remote.OfflineCard.subtitle,
+            card(icon: "wifi.exclamationmark", title: L10n.Remote.OfflineCard.title,
+                 subtitle: s.lastError.map { "\($0) \(L10n.Remote.OfflineCard.subtitle)" } ?? L10n.Remote.OfflineCard.subtitle,
                  action: L10n.Remote.retry,
                  secondary: s.tv?.kind == .androidTV ? (L10n.Remote.repair, { s.beginPairing() }) : nil) { s.connect() }
         default: EmptyView()
@@ -89,7 +90,7 @@ struct ConnectionBanner: View {
             Image(systemName: icon).font(.title3).foregroundStyle(Theme.accent)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).font(.callout.weight(.semibold))
-                Text(subtitle).font(.caption2).foregroundStyle(.secondary)
+                Text(subtitle).font(.caption2).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             if let secondary { Button(secondary.0, action: secondary.1).buttonStyle(.bordered).controlSize(.small) }

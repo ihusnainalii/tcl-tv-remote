@@ -128,6 +128,30 @@ public enum L10n {
     /// Scanning for TVs
     public static let scanningForTVs = L10n.tr("Localizable", "devices.scanningForTVs", fallback: "Scanning for TVs")
   }
+  public enum Error {
+    /// That code didn't match. Check the code on the TV and try again.
+    public static let badCode = L10n.tr("Localizable", "error.badCode", fallback: "That code didn't match. Check the code on the TV and try again.")
+    /// Couldn't set up secure pairing. Try Settings, TVs, Reset Pairing.
+    public static let certificate = L10n.tr("Localizable", "error.certificate", fallback: "Couldn't set up secure pairing. Try Settings, TVs, Reset Pairing.")
+    /// Lost the connection to the TV.
+    public static let connectionLost = L10n.tr("Localizable", "error.connectionLost", fallback: "Lost the connection to the TV.")
+    /// The TV refused the connection. It may need pairing again.
+    public static let connectionRefused = L10n.tr("Localizable", "error.connectionRefused", fallback: "The TV refused the connection. It may need pairing again.")
+    /// Errors: what happened and what to do
+    public static let generic = L10n.tr("Localizable", "error.generic", fallback: "Something went wrong. Please try again.")
+    /// TCL Remote needs Local Network access. Turn it on in Settings, Privacy & Security, Local Network.
+    public static let localNetwork = L10n.tr("Localizable", "error.localNetwork", fallback: "TCL Remote needs Local Network access. Turn it on in Settings, Privacy & Security, Local Network.")
+    /// The TV didn't respond. Make sure it's on and on the same Wi-Fi.
+    public static let notResponding = L10n.tr("Localizable", "error.notResponding", fallback: "The TV didn't respond. Make sure it's on and on the same Wi-Fi.")
+    /// You're not connected to Wi-Fi.
+    public static let noWifi = L10n.tr("Localizable", "error.noWifi", fallback: "You're not connected to Wi-Fi.")
+    /// The TV declined the request.
+    public static let refused = L10n.tr("Localizable", "error.refused", fallback: "The TV declined the request.")
+    /// The secure connection failed. Pair this TV again.
+    public static let secureConnection = L10n.tr("Localizable", "error.secureConnection", fallback: "The secure connection failed. Pair this TV again.")
+    /// Can't reach the TV. Make sure it's on and on the same Wi-Fi.
+    public static let unreachable = L10n.tr("Localizable", "error.unreachable", fallback: "Can't reach the TV. Make sure it's on and on the same Wi-Fi.")
+  }
   public enum Header {
     /// Header and ⋯ menu
     public static let closeSettings = L10n.tr("Localizable", "header.closeSettings", fallback: "Close Settings")

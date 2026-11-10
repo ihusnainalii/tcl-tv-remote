@@ -16,6 +16,8 @@ public final class Store: ObservableObject {
     @Published private(set) var scanning = false
     @Published private(set) var apps: [TVApp] = []
     @Published private(set) var toast: String?
+    /// Why the last connection attempt failed, in plain words (shown in the offline banner).
+    @Published private(set) var lastError: String?
     @Published private(set) var pairError = false
     @Published private(set) var tvOn: Bool?
     @Published private(set) var volume: TVVolume?
@@ -30,6 +32,7 @@ public final class Store: ObservableObject {
     private var retryTask: Task<Void, Never>?
     private var lastVolumeChange = Date.distantPast
     private var commandChain: Task<Void, Never>?
+    private var watchRelay: AnyObject?
 
     public init(repository: TVRepository = UserDefaultsTVRepository()) {
         self.repository = repository
@@ -77,6 +80,13 @@ public final class Store: ObservableObject {
         withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { found.append(tv) }
     }
 
+    /// Lets the Apple Watch app control the TV through this iPhone (no-op elsewhere).
+    public func startWatchRelay() {
+        #if os(iOS)
+        if watchRelay == nil { watchRelay = WatchRelay(store: self) }
+        #endif
+    }
+
     public func showDevices() { go(.devices); scan() }
     public func showSettings() { go(.settings) }
     func closeSettings() { go(tv == nil ? .devices : .remote) }
@@ -117,6 +127,7 @@ public final class Store: ObservableObject {
             do {
                 try await remote.connect()
                 withAnimation(.smooth) { link = .connected }
+                lastError = nil
                 if failures > 0 {
                     show(L10n.Toast.reconnected)
                     SystemNotifications.post(L10n.Notification.Reconnected.title, L10n.Notification.Reconnected.body(displayName))
@@ -126,6 +137,7 @@ public final class Store: ObservableObject {
                 let list = await remote.apps()
                 withAnimation(.spring) { apps = list }
             } catch {
+                lastError = UserFacingError.message(for: error)
                 // A saved TV was paired before, so failing means offline or moved, not unpaired.
                 let needsPairing = remote is PairingCapable && !library.isSaved(tv)
                 withAnimation(.smooth) { link = needsPairing ? .needsPairing : .failed }
@@ -158,7 +170,7 @@ public final class Store: ObservableObject {
         guard let p = remote as? PairingCapable else { return }
         go(.pairing)
         Task {
-            do { try await p.startPairing() } catch { show(L10n.Toast.pairingFailed(error.localizedDescription)); go(.remote) }
+            do { try await p.startPairing() } catch { show(L10n.Toast.pairingFailed(UserFacingError.message(for: error)), long: true); go(.remote) }
         }
     }
 
@@ -173,7 +185,7 @@ public final class Store: ObservableObject {
                 connect()
             } catch {
                 withAnimation(.default) { pairError.toggle() }
-                show(error.localizedDescription)
+                show(UserFacingError.message(for: error), long: true)
             }
         }
     }
@@ -237,7 +249,7 @@ public final class Store: ObservableObject {
     func nudgeVolume(_ delta: Int) { setVolume((stepper?.target ?? volume?.level ?? 0) + delta) }
 
     func setLaunchAtLogin(_ on: Bool) {
-        do { try LoginItem.set(on) } catch { show(L10n.Toast.loginItemFailed(error.localizedDescription)) }
+        do { try LoginItem.set(on) } catch { show(L10n.Toast.loginItemFailed(UserFacingError.message(for: error)), long: true) }
         launchAtLogin = LoginItem.isEnabled
     }
 
@@ -254,7 +266,8 @@ public final class Store: ObservableObject {
                 show(L10n.Toast.unsupported(name))
             } catch {
                 withAnimation(.smooth) { link = .failed }
-                show(error.localizedDescription)
+                lastError = UserFacingError.message(for: error)
+                show(lastError ?? L10n.Error.generic, long: true)
                 scheduleRetry()
             }
         }
@@ -262,10 +275,11 @@ public final class Store: ObservableObject {
 
     private func go(_ s: Screen) { withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) { screen = s } }
 
-    func show(_ message: String) {
+    /// Brief message at the bottom of the screen; errors (`long`) stay up longer so they can be read.
+    func show(_ message: String, long: Bool = false) {
         withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) { toast = message }
         Task {
-            try? await Task.sleep(for: .seconds(2.5))
+            try? await Task.sleep(for: .seconds(long ? 4.5 : 2.5))
             if toast == message { withAnimation(.easeOut(duration: 0.3)) { toast = nil } }
         }
     }

@@ -9,6 +9,7 @@ struct TCLRemoteiOSApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(style: .fullScreen).environmentObject(store)
+                .onAppear { store.startWatchRelay() }
         }
     }
 }
