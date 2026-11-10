@@ -36,7 +36,8 @@ public final class RokuRemote: TVRemote {
         let re = try! Regex(#"<app id="([^"]+)"[^>]*>([^<]+)</app>"#)
         return xml.matches(of: re).compactMap { m in
             guard let id = m[1].substring, let name = m[2].substring else { return nil }
-            return TVApp(id: String(id), name: String(name).replacingOccurrences(of: "&amp;", with: "&"))
+            return TVApp(id: String(id), name: String(name).replacingOccurrences(of: "&amp;", with: "&"),
+                         icon: URL(string: base + "query/icon/\(id)"))
         }
     }
 

@@ -110,12 +110,27 @@ public final class AndroidTVRemote: TVRemote {
         try await send(PB.build { $0.msg(10) { $0.int(1, key.android); $0.int(2, 3) } })
     }
 
+    /// Types by sending one key press per character, which works in any focused text field.
+    /// ponytail: Remote v2 key events carry no Shift, so letters arrive lowercase; the IME
+    /// batch-edit path keeps case but only works while the TV reports an open keyboard.
     public func type(_ text: String) async throws {
-        let end = max(text.count - 1, 0)
-        try await send(PB.build { $0.msg(21) {
-            $0.int(1, imeCounter); $0.int(2, fieldCounter)
-            $0.msg(3) { $0.int(1, 1); $0.msg(2) { $0.int(1, end); $0.int(2, end); $0.string(3, text) } }
-        } })
+        for ch in text.lowercased() {
+            guard let code = Self.keyCode(for: ch) else { continue }
+            try await send(PB.build { $0.msg(10) { $0.int(1, code); $0.int(2, 3) } })
+            try await Task.sleep(for: .milliseconds(30))
+        }
+    }
+
+    /// Android KeyEvent code for a character, or nil if it can't be typed as a key.
+    static func keyCode(for ch: Character) -> Int? {
+        if let a = ch.asciiValue {
+            if (97...122).contains(a) { return Int(a) - 97 + 29 }   // a-z -> KEYCODE_A...
+            if (48...57).contains(a) { return Int(a) - 48 + 7 }     // 0-9 -> KEYCODE_0...
+        }
+        let symbols: [Character: Int] = [" ": 62, ".": 56, ",": 55, "-": 69, "=": 70, "@": 77, "/": 76, "'": 75,
+                                         ";": 74, "[": 71, "]": 72, "\\": 73, "`": 68, "+": 81, "#": 18, "*": 17,
+                                         "\n": 66]
+        return symbols[ch]
     }
 
     public func apps() async -> [TVApp] {

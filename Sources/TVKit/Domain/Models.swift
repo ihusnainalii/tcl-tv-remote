@@ -13,8 +13,10 @@ public struct TV: Codable, Hashable, Identifiable {
 public struct TVApp: Hashable, Identifiable, Codable {
     public var id: String   // Roku app id, or Android TV app link
     public var name: String
+    /// Icon served by the TV itself (Roku). Nil means look it up (see AppIconResolver).
+    public var icon: URL?
 
-    public init(id: String, name: String) { self.id = id; self.name = name }
+    public init(id: String, name: String, icon: URL? = nil) { self.id = id; self.name = name; self.icon = icon }
 }
 
 public enum TVError: LocalizedError {

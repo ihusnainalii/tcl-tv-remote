@@ -29,6 +29,9 @@ final class Store: ObservableObject {
     private let discovery = Discovery()
     private let pathMonitor = NWPathMonitor()
     private var failures = 0
+    private var volumeTarget: Int?
+    private var volumeTask: Task<Void, Never>?
+    private var sentLevel = 0
     private var retryTask: Task<Void, Never>?
 
     /// Found on the network but never connected.
@@ -101,7 +104,10 @@ final class Store: ObservableObject {
         remote = tv.kind == .roku ? RokuRemote(host: tv.host) : AndroidTVRemote(host: tv.host)
         if let a = remote as? AndroidTVRemote {
             a.onPower = { [weak self] on in withAnimation { self?.tvOn = on } }
-            a.onVolume = { [weak self] l, m, muted in withAnimation(.smooth) { self?.volume = Volume(level: l, max: m, muted: muted) } }
+            a.onVolume = { [weak self] l, m, muted in
+                guard let self, self.volumeTask == nil else { return } // don't fight the slider mid-drag
+                withAnimation(.smooth) { self.volume = Volume(level: l, max: m, muted: muted) }
+            }
             a.onDisconnect = { [weak self] in
                 guard let self, self.link == .connected else { return }
                 withAnimation(.smooth) { self.link = .failed }
@@ -273,6 +279,28 @@ final class Store: ObservableObject {
     func cancelPairing() { (remote as? AndroidTVRemote)?.cancelPairing(); go(.remote) }
 
     // MARK: commands
+
+    /// Android TV Remote v2 has no "set volume" command, so walk there with volume up/down steps.
+    func setVolume(_ level: Int) {
+        guard let v = volume, let a = remote as? AndroidTVRemote else { return }
+        let target = max(0, min(v.max, level))
+        if volumeTask == nil { sentLevel = v.level }
+        volumeTarget = target
+        volume?.level = target // optimistic; the TV's own report confirms it afterwards
+        guard volumeTask == nil else { return }
+        volumeTask = Task { [weak self] in
+            while let self, let t = self.volumeTarget, t != self.sentLevel {
+                let up = t > self.sentLevel
+                try? await a.press(up ? .volUp : .volDown)
+                self.sentLevel += up ? 1 : -1
+                try? await Task.sleep(for: .milliseconds(35))
+            }
+            self?.volumeTask = nil
+            self?.volumeTarget = nil
+        }
+    }
+
+    func nudgeVolume(_ delta: Int) { setVolume((volumeTarget ?? volume?.level ?? 0) + delta) }
 
     func press(_ key: Key) {
         NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)

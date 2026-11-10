@@ -16,6 +16,14 @@ final class ProtocolTests: XCTestCase {
         XCTAssertEqual(Key.n0.android, 7); XCTAssertEqual(Key.next.android, 87); XCTAssertNil(Key.next.digit)
     }
 
+    @MainActor func testTypingKeyCodes() {
+        XCTAssertEqual(AndroidTVRemote.keyCode(for: "a"), 29)
+        XCTAssertEqual(AndroidTVRemote.keyCode(for: "z"), 54)
+        XCTAssertEqual(AndroidTVRemote.keyCode(for: "0"), 7)
+        XCTAssertEqual(AndroidTVRemote.keyCode(for: " "), 62)
+        XCTAssertNil(AndroidTVRemote.keyCode(for: "é"))
+    }
+
     func testUpdateVersionCompare() {
         XCTAssertTrue(UpdateCheck.isNewer("v1.10.0", than: "1.9.2"))
         XCTAssertFalse(UpdateCheck.isNewer("v1.0", than: "1.0"))

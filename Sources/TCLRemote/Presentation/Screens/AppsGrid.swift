@@ -44,10 +44,7 @@ struct AppsGrid: View {
     func tile(_ app: TVApp) -> some View {
         Button { s.launch(app) } label: {
             VStack(spacing: 5) {
-                Text(String(app.name.prefix(1)))
-                    .font(.system(size: 17, weight: .bold, design: .rounded)).foregroundStyle(.white)
-                    .frame(width: 38, height: 38)
-                    .background(tint(app.name).gradient, in: RoundedRectangle(cornerRadius: 10))
+                AppIcon(app: app, tint: tint(app.name))
                     .overlay(alignment: .topTrailing) {
                         if s.isFavorite(app) {
                             Image(systemName: "star.fill").font(.system(size: 8)).foregroundStyle(.yellow)
@@ -105,5 +102,30 @@ struct AppsGrid: View {
         if let c = known[name] { return c }
         let palette: [Color] = [.blue, .purple, .pink, .orange, .teal, .indigo, .mint]
         return palette[abs(name.unicodeScalars.reduce(0) { $0 &+ Int($1.value) }) % palette.count]
+    }
+}
+
+/// Real app icon (from the TV or the App Store), with the letter tile as placeholder/fallback.
+struct AppIcon: View {
+    let app: TVApp
+    let tint: Color
+    @State private var url: URL?
+
+    var body: some View {
+        AsyncImage(url: url, transaction: Transaction(animation: .easeOut(duration: 0.25))) { phase in
+            if let image = phase.image {
+                image.resizable().interpolation(.high).aspectRatio(contentMode: .fill)
+                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            } else {
+                Text(String(app.name.prefix(1)))
+                    .font(.system(size: 17, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(tint.gradient)
+            }
+        }
+        .frame(width: 38, height: 38)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Theme.stroke, lineWidth: 0.5))
+        .task(id: app.id) { url = await AppIconResolver.shared.icon(for: app) }
     }
 }
