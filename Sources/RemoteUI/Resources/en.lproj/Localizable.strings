@@ -37,7 +37,7 @@
 "devices.save" = "Save";
 "devices.forget" = "Forget";
 "devices.noTVs" = "No TVs found";
-"devices.sameWifi" = "Make sure your Mac and TV are on the same Wi-Fi.";
+"devices.sameWifi" = "Make sure your TV is on and connected to the same Wi-Fi.";
 "devices.ipPlaceholder" = "TV IP address, e.g. 192.168.1.20";
 "devices.connect" = "Connect";
 "devices.manualName" = "TCL TV (%@)";
@@ -180,3 +180,17 @@
 "mobile.touchpad.hint" = "Swipe to move · Tap to select";
 "mobile.welcome.title" = "Find your TCL TV";
 "mobile.welcome.subtitle" = "Make sure this device and your TV are on the same Wi-Fi.";
+
+/* Onboarding (iPhone and iPad) */
+"onboarding.skip" = "Skip";
+"onboarding.next" = "Next";
+"onboarding.start" = "Get Started";
+"onboarding.showAgain" = "Show Tutorial";
+"onboarding.find.title" = "Your TCL TV, in your hand";
+"onboarding.find.body" = "TCL Remote finds Google TV, Android TV and Roku TV on your Wi-Fi. No account, no cloud.";
+"onboarding.pair.title" = "Pair once";
+"onboarding.pair.body" = "Google TV shows a 6-character code. Enter it once and the app reconnects by itself from then on.";
+"onboarding.control.title" = "Buttons or touchpad";
+"onboarding.control.body" = "Use the big arrow pad, or switch to the touchpad: swipe to move, tap to select. Volume, channels and media are right below.";
+"onboarding.apps.title" = "Apps and typing";
+"onboarding.apps.body" = "Open Netflix, YouTube and more in one tap, and type searches with your keyboard instead of the arrows.";

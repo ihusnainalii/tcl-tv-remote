@@ -6,7 +6,12 @@ import TVKit
 /// The Mac keeps its compact menu bar panel (`RootView(style: .panel)`).
 struct MobileRootView: View {
     @EnvironmentObject var s: Store
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @AppStorage("mobileTab") private var tab = MobileTab.remote
+    @AppStorage(OnboardingView.doneKey) private var onboarded = false
+
+    /// iPad's Remote tab already holds apps and keys in its second column, so it only adds Settings.
+    private var isWide: Bool { sizeClass == .regular }
 
     enum MobileTab: String { case remote, apps, keys, settings }
 
@@ -15,21 +20,25 @@ struct MobileRootView: View {
             Tab(L10n.Mobile.Tab.remote, systemImage: "appletvremote.gen4.fill", value: MobileTab.remote) {
                 MobileRemoteTab()
             }
-            Tab(L10n.Mobile.Tab.apps, systemImage: "square.grid.2x2.fill", value: MobileTab.apps) {
-                MobileScreen(title: L10n.Mobile.Tab.apps) {
-                    if s.tv == nil { NoTVView() } else {
-                        AppsGrid(iconSize: 64, columns: 4, maxHeight: .infinity)
+            if !isWide {
+                Tab(L10n.Mobile.Tab.apps, systemImage: "square.grid.2x2.fill", value: MobileTab.apps) {
+                    MobileScreen(title: L10n.Mobile.Tab.apps) {
+                        if s.tv == nil { NoTVView() } else {
+                            AppsGrid(iconSize: 64, columns: 4, maxHeight: .infinity)
+                        }
                     }
                 }
-            }
-            Tab(L10n.Mobile.Tab.keys, systemImage: "keyboard.fill", value: MobileTab.keys) {
-                MobileScreen(title: L10n.Mobile.Tab.keys) { MobileKeysView() }
+                Tab(L10n.Mobile.Tab.keys, systemImage: "keyboard.fill", value: MobileTab.keys) {
+                    MobileScreen(title: L10n.Mobile.Tab.keys) { MobileKeysView() }
+                }
             }
             Tab(L10n.Mobile.Tab.settings, systemImage: "gearshape.fill", value: MobileTab.settings) {
                 MobileScreen(title: L10n.Mobile.Tab.settings) { SettingsView() }
             }
         }
         .tint(AccentStyle.current.colors.0)
+        .onAppear { if isWide, tab == .apps || tab == .keys { tab = .remote } }
+        .onChange(of: isWide) { if isWide, tab == .apps || tab == .keys { tab = .remote } }
         // TV list and pairing float above whichever tab is open.
         .sheet(isPresented: Binding(get: { s.screen == .devices && s.tv != nil },
                                     set: { if !$0, s.screen == .devices { s.closeSettings() } })) {
@@ -45,6 +54,9 @@ struct MobileRootView: View {
             PairingView().padding(24).presentationDetents([.medium]).environmentObject(s)
         }
         .overlay(alignment: .bottom) { Toast().padding(.bottom, 90) }
+        .fullScreenCover(isPresented: Binding(get: { !onboarded }, set: { if !$0 { onboarded = true } })) {
+            OnboardingView { onboarded = true }
+        }
         .themed()
     }
 }
@@ -113,11 +125,6 @@ struct NoTVView: View {
     var body: some View {
         VStack(spacing: 20) {
             VStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Theme.accent).frame(width: 84, height: 84)
-                    Image(systemName: "tv").font(.system(size: 36, weight: .semibold)).foregroundStyle(.white)
-                }
-                .shadow(color: Theme.glow.opacity(0.35), radius: 14, y: 6)
                 Text(L10n.Mobile.Welcome.title).font(.title2.weight(.bold))
                 Text(L10n.Mobile.Welcome.subtitle).font(.subheadline).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

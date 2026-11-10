@@ -117,8 +117,8 @@ public enum L10n {
     public static let rename = L10n.tr("Localizable", "devices.rename", fallback: "Rename…")
     /// Rename TV
     public static let renameTitle = L10n.tr("Localizable", "devices.renameTitle", fallback: "Rename TV")
-    /// Make sure your Mac and TV are on the same Wi-Fi.
-    public static let sameWifi = L10n.tr("Localizable", "devices.sameWifi", fallback: "Make sure your Mac and TV are on the same Wi-Fi.")
+    /// Make sure your TV is on and connected to the same Wi-Fi.
+    public static let sameWifi = L10n.tr("Localizable", "devices.sameWifi", fallback: "Make sure your TV is on and connected to the same Wi-Fi.")
     /// Save
     public static let save = L10n.tr("Localizable", "devices.save", fallback: "Save")
     /// Scan
@@ -212,6 +212,40 @@ public enum L10n {
     public enum Unavailable {
       /// TV unavailable
       public static let title = L10n.tr("Localizable", "notification.unavailable.title", fallback: "TV unavailable")
+    }
+  }
+  public enum Onboarding {
+    /// Next
+    public static let next = L10n.tr("Localizable", "onboarding.next", fallback: "Next")
+    /// Show Tutorial
+    public static let showAgain = L10n.tr("Localizable", "onboarding.showAgain", fallback: "Show Tutorial")
+    /// Onboarding (iPhone and iPad)
+    public static let skip = L10n.tr("Localizable", "onboarding.skip", fallback: "Skip")
+    /// Get Started
+    public static let start = L10n.tr("Localizable", "onboarding.start", fallback: "Get Started")
+    public enum Apps {
+      /// Open Netflix, YouTube and more in one tap, and type searches with your keyboard instead of the arrows.
+      public static let body = L10n.tr("Localizable", "onboarding.apps.body", fallback: "Open Netflix, YouTube and more in one tap, and type searches with your keyboard instead of the arrows.")
+      /// Apps and typing
+      public static let title = L10n.tr("Localizable", "onboarding.apps.title", fallback: "Apps and typing")
+    }
+    public enum Control {
+      /// Use the big arrow pad, or switch to the touchpad: swipe to move, tap to select. Volume, channels and media are right below.
+      public static let body = L10n.tr("Localizable", "onboarding.control.body", fallback: "Use the big arrow pad, or switch to the touchpad: swipe to move, tap to select. Volume, channels and media are right below.")
+      /// Buttons or touchpad
+      public static let title = L10n.tr("Localizable", "onboarding.control.title", fallback: "Buttons or touchpad")
+    }
+    public enum Find {
+      /// TCL Remote finds Google TV, Android TV and Roku TV on your Wi-Fi. No account, no cloud.
+      public static let body = L10n.tr("Localizable", "onboarding.find.body", fallback: "TCL Remote finds Google TV, Android TV and Roku TV on your Wi-Fi. No account, no cloud.")
+      /// Your TCL TV, in your hand
+      public static let title = L10n.tr("Localizable", "onboarding.find.title", fallback: "Your TCL TV, in your hand")
+    }
+    public enum Pair {
+      /// Google TV shows a 6-character code. Enter it once and the app reconnects by itself from then on.
+      public static let body = L10n.tr("Localizable", "onboarding.pair.body", fallback: "Google TV shows a 6-character code. Enter it once and the app reconnects by itself from then on.")
+      /// Pair once
+      public static let title = L10n.tr("Localizable", "onboarding.pair.title", fallback: "Pair once")
     }
   }
   public enum Pairing {

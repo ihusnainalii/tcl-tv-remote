@@ -284,7 +284,12 @@ private struct AboutSettings: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             // Mac builds update from GitHub releases; iOS updates come from the App Store.
-            if PlatformInfo.isMac { updateCheck }
+            if PlatformInfo.isMac {
+                updateCheck
+            } else {
+                Button(L10n.Onboarding.showAgain) { UserDefaults.standard.set(false, forKey: "onboardingDone") }
+                    .buttonStyle(.bordered).padding(.top, 4)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.bottom, 8)

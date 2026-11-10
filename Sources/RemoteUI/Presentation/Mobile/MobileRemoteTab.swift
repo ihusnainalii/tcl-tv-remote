@@ -25,7 +25,7 @@ struct MobileRemoteTab: View {
                                     .frame(width: min(460, geo.size.width * 0.46))
                                 IPadSideColumn()
                             }
-                            .padding(.horizontal, 32).padding(.vertical, 16)
+                            .padding(.horizontal, 32).padding(.vertical, 8)
                         } else {
                             RemoteControls(mode: $mode, size: geo.size.height, width: geo.size.width - 40)
                                 .padding(.horizontal, 20)
@@ -56,13 +56,27 @@ private struct RemoteControls: View {
     private var unit: CGFloat { min(max(size / 760, 0.72), 1.2) }
     private var key: CGFloat { 56 * unit }
     private var small: CGFloat { 46 * unit }
-    private var pad: CGFloat { min(width, max(190, size * 0.36)) }
+    private var rockerScale: CGFloat { 1.3 * unit }
+    /// One gap between every row, so spacing is even everywhere.
+    private var gap: CGFloat { 20 * unit }
+    private var showsApps: Bool { sizeClass != .regular && !s.displayedApps.isEmpty }
+    private var showsBanner: Bool { s.link == .needsPairing || s.link == .failed }
+
+    /// The control surface takes whatever height is left after the fixed rows and equal gaps.
+    private var pad: CGFloat {
+        var rows: [CGFloat] = [36, key, max(76 * rockerScale + 14, key + small + 10)] // picker, keys, media cluster
+        if s.volume != nil { rows.append(20) }
+        if showsApps { rows.append(50 * unit + 26) }
+        if showsBanner { rows.append(58) }
+        let fixed = rows.reduce(0, +) + gap * CGFloat(rows.count) + 18 // gaps around the pad + top/bottom inset
+        return min(width, max(170, size - fixed))
+    }
 
     var body: some View {
-        VStack(spacing: 0) {
-            ConnectionBanner().padding(.top, 8)
+        VStack(spacing: gap) {
+            ConnectionBanner()
 
-            VStack(spacing: 0) {
+            VStack(spacing: gap) {
                 HStack(spacing: 12) {
                     Picker("", selection: $mode) {
                         Label(L10n.Mobile.Mode.buttons, systemImage: "circle.grid.cross").tag(MobileRemoteTab.ControlMode.dpad)
@@ -71,9 +85,7 @@ private struct RemoteControls: View {
                     .pickerStyle(.segmented).labelsHidden()
                     InputMenu(size: 36)
                 }
-                .padding(.top, 10)
-
-                Spacer(minLength: 10)
+                .frame(height: 36)
 
                 Group {
                     switch mode {
@@ -84,8 +96,6 @@ private struct RemoteControls: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.97)))
                 .animation(.spring(response: 0.4, dampingFraction: 0.85), value: mode)
 
-                Spacer(minLength: 10)
-
                 HStack(spacing: 10) {
                     RemoteKey(.back, "arrow.uturn.backward", size: key, iconSize: 18 * unit)
                     RemoteKey(.home, "house.fill", size: key, iconSize: 18 * unit)
@@ -93,11 +103,9 @@ private struct RemoteControls: View {
                     RemoteKey(.settings, "gearshape", size: key, iconSize: 18 * unit)
                 }
 
-                Spacer(minLength: 10)
-
                 HStack(alignment: .center, spacing: 10) {
                     Rocker(up: .volUp, down: .volDown, upIcon: "speaker.plus.fill", downIcon: "speaker.minus.fill",
-                           label: L10n.Remote.volumeShort, scale: 1.3 * unit)
+                           label: L10n.Remote.volumeShort, scale: rockerScale)
                     VStack(spacing: 10) {
                         RemoteKey(.playPause, "playpause.fill", size: key, iconSize: 20 * unit)
                         HStack(spacing: 10) {
@@ -107,19 +115,19 @@ private struct RemoteControls: View {
                         }
                     }
                     Rocker(up: .chUp, down: .chDown, upIcon: "chevron.up", downIcon: "chevron.down",
-                           label: L10n.Remote.channelShort, scale: 1.3 * unit)
+                           label: L10n.Remote.channelShort, scale: rockerScale)
                 }
 
-                if let v = s.volume { VolumeBar(volume: v).padding(.horizontal, 4).padding(.top, 12) }
-
-                Spacer(minLength: 10)
+                if let v = s.volume { VolumeBar(volume: v).padding(.horizontal, 4) }
 
                 // iPad shows apps in the side column instead.
-                if sizeClass != .regular { AppStrip(iconSize: 50 * unit).padding(.bottom, 10) }
+                if showsApps { AppStrip(iconSize: 50 * unit) }
             }
             .disabled(s.link == .needsPairing)
             .opacity(s.link == .needsPairing ? 0.45 : 1)
         }
+        .padding(.vertical, 8)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 }
 
@@ -155,10 +163,11 @@ private struct AppStrip: View {
 private struct IPadSideColumn: View {
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 26) {
+            VStack(alignment: .leading, spacing: 24) {
                 section(L10n.Mobile.Tab.apps) { AppsGrid(iconSize: 60, columns: 5, maxHeight: .infinity) }
                 section(L10n.Remote.Tab.type) { TypePad(large: true) }
                 section(L10n.Remote.Tab.keypad) { KeypadGrid(height: 52) }
+                section(L10n.Remote.Tab.more) { MoreGrid(height: 56) }
             }
             .padding(.vertical, 12)
         }

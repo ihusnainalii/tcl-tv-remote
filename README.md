@@ -60,6 +60,7 @@ A native iPhone and iPad app shares every rule, protocol driver and component wi
 <img src="docs/screenshots/iphone-apps.png" width="200" alt="Apps tab on iPhone">
 <img src="docs/screenshots/iphone-keys.png" width="200" alt="Keys tab on iPhone">
 <img src="docs/screenshots/iphone-settings.png" width="200" alt="Settings tab on iPhone">
+<img src="docs/screenshots/iphone-onboarding.png" width="200" alt="First-launch walkthrough">
 </p>
 
 <p align="center">
@@ -67,10 +68,12 @@ A native iPhone and iPad app shares every rule, protocol driver and component wi
 <img src="docs/screenshots/ipad-welcome.png" width="400" alt="Finding a TV on iPad">
 </p>
 
-- **Tab bar** with Remote, Apps, Keys and Settings. iPhone shows it at the bottom; iPadOS shows it at the top.
+- **Walkthrough** on first launch: four short pages on finding, pairing and controlling your TV. Replay it from Settings → About.
+- **Tab bar:** iPhone has Remote, Apps, Keys and Settings at the bottom. iPad only needs Remote and Settings, at the top, because its Remote tab already includes apps and keys.
+- **App icon and launch screen** use the TCL Remote TV icon.
 - **Remote tab:** fills the screen with no scrolling. It has a large arrow pad or a **touchpad** (swipe to move, with each swipe step one arrow press and a haptic tap; tap to select), big buttons for back, home, search and settings, a volume/media/channel cluster, the live volume bar, and **a row of your apps** at the bottom. Everything scales to the screen, from iPhone SE to Pro Max.
 - **TV switcher** in the navigation bar: switch between saved TVs or find new ones. Pairing opens as a sheet.
-- **iPad:** a two-column remote. The controls fill the left column; your apps, the live keyboard and the number pad fill the right.
+- **iPad:** a two-column remote. The controls fill the left column with even spacing; your apps, the live keyboard, the number pad and the extra keys fill the right.
 - **Keys tab:** a live keyboard for the TV's text boxes, a number pad, and extra keys (guide, captions, stop, power on/off).
 - With a hardware keyboard attached, the same shortcuts as on the Mac work, and Settings lists them.
 
