@@ -202,13 +202,17 @@ struct Rocker: View {
     @EnvironmentObject var s: Store
     let up: Key, down: Key, upIcon: String, downIcon: String, label: String
     var scale: CGFloat = 1
+    /// Total height to fill (iPhone/iPad); nil keeps the compact Mac size.
+    var height: CGFloat?
+
+    private var half: CGFloat { height.map { ($0 - 14 * scale) / 2 } ?? 38 * scale }
 
     var body: some View {
         VStack(spacing: 0) {
-            Image(systemName: upIcon).frame(width: 46 * scale, height: 38 * scale).contentShape(Rectangle())
+            Image(systemName: upIcon).frame(width: 46 * scale, height: half).contentShape(Rectangle())
                 .repeatPress { s.press(up) }.accessibilityLabel(up.label)
-            Text(label).font(.system(size: 9 * scale, weight: .bold)).foregroundStyle(.secondary)
-            Image(systemName: downIcon).frame(width: 46 * scale, height: 38 * scale).contentShape(Rectangle())
+            Text(label).font(.system(size: 9 * scale, weight: .bold)).foregroundStyle(.secondary).frame(height: 14 * scale)
+            Image(systemName: downIcon).frame(width: 46 * scale, height: half).contentShape(Rectangle())
                 .repeatPress { s.press(down) }.accessibilityLabel(down.label)
         }
         .font(.system(size: 13 * scale, weight: .semibold))

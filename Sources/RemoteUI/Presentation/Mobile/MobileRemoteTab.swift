@@ -57,6 +57,8 @@ private struct RemoteControls: View {
     private var key: CGFloat { 56 * unit }
     private var small: CGFloat { 46 * unit }
     private var rockerScale: CGFloat { 1.3 * unit }
+    /// Height of the middle column (Home + two rows); the rockers match it.
+    private var cluster: CGFloat { key + small * 2 + 20 }
     /// One gap between every row, so spacing is even everywhere.
     private var gap: CGFloat { 20 * unit }
     private var showsApps: Bool { sizeClass != .regular && !s.displayedApps.isEmpty }
@@ -64,10 +66,10 @@ private struct RemoteControls: View {
 
     /// The control surface takes whatever height is left after the fixed rows and equal gaps.
     private var pad: CGFloat {
-        var rows: [CGFloat] = [36, key, max(76 * rockerScale + 14, key + small + 10)] // picker, keys, media cluster
+        var rows: [CGFloat] = [36, cluster] // picker, button cluster
         if s.volume != nil { rows.append(20) }
         if showsApps { rows.append(50 * unit + 26) }
-        if showsBanner { rows.append(58) }
+        if showsBanner { rows.append(96) } // up to three lines of explanation
         let fixed = rows.reduce(0, +) + gap * CGFloat(rows.count) + 18 // gaps around the pad + top/bottom inset
         return min(width, max(170, size - fixed))
     }
@@ -89,32 +91,32 @@ private struct RemoteControls: View {
 
                 Group {
                     switch mode {
-                    case .dpad: DPad(diameter: pad, homeOnLongPress: true).frame(maxWidth: .infinity)
+                    case .dpad: DPad(diameter: pad).frame(maxWidth: .infinity)
                     case .touchpad: Touchpad().frame(height: pad)
                     }
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.97)))
                 .animation(.spring(response: 0.4, dampingFraction: 0.85), value: mode)
 
-                HStack(spacing: 10) {
-                    RemoteKey(.back, "arrow.uturn.backward", size: key, iconSize: 18 * unit)
-                    RemoteKey(.search, "magnifyingglass", size: key, iconSize: 18 * unit)
-                    RemoteKey(.settings, "gearshape", size: key, iconSize: 18 * unit)
-                }
-
+                // Big volume and channel rockers on the sides; Home first in the middle, then the rest.
                 HStack(alignment: .center, spacing: 10) {
                     Rocker(up: .volUp, down: .volDown, upIcon: "speaker.plus.fill", downIcon: "speaker.minus.fill",
-                           label: L10n.Remote.volumeShort, scale: rockerScale)
+                           label: L10n.Remote.volumeShort, scale: 1.3 * unit, height: cluster)
                     VStack(spacing: 10) {
-                        RemoteKey(.playPause, "playpause.fill", size: key, iconSize: 20 * unit)
+                        RemoteKey(.home, "house.fill", size: key, iconSize: 20 * unit)
+                        HStack(spacing: 10) {
+                            RemoteKey(.back, "arrow.uturn.backward", size: small, iconSize: 16 * unit)
+                            RemoteKey(.mute, "speaker.slash.fill", size: small, iconSize: 16 * unit)
+                            RemoteKey(.search, "magnifyingglass", size: small, iconSize: 16 * unit)
+                        }
                         HStack(spacing: 10) {
                             RemoteKey(.rewind, "backward.fill", size: small, iconSize: 15 * unit)
-                            RemoteKey(.mute, "speaker.slash.fill", size: small, iconSize: 15 * unit)
+                            RemoteKey(.settings, "gearshape", size: small, iconSize: 16 * unit)
                             RemoteKey(.forward, "forward.fill", size: small, iconSize: 15 * unit)
                         }
                     }
                     Rocker(up: .chUp, down: .chDown, upIcon: "chevron.up", downIcon: "chevron.down",
-                           label: L10n.Remote.channelShort, scale: rockerScale)
+                           label: L10n.Remote.channelShort, scale: 1.3 * unit, height: cluster)
                 }
 
                 if let v = s.volume { VolumeBar(volume: v).padding(.horizontal, 4) }

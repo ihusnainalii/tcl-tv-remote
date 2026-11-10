@@ -91,7 +91,7 @@ struct ConnectionBanner: View {
             Image(systemName: icon).font(.title3).foregroundStyle(Theme.accent)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).font(.callout.weight(.semibold))
-                Text(subtitle).font(.caption2).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(subtitle).font(.caption2).foregroundStyle(.secondary).lineLimit(3).fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             if let secondary { Button(secondary.0, action: secondary.1).buttonStyle(.bordered).controlSize(.small) }
