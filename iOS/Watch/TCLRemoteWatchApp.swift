@@ -21,9 +21,9 @@ struct WatchRootView: View {
     var body: some View {
         NavigationStack {
             TabView {
-                DPadPage().navigationTitle(s.name)
-                ControlsPage().navigationTitle(s.name)
-                AppsPage().navigationTitle(s.name)
+                DPadPage()
+                ControlsPage()
+                AppsPage()
             }
             .tabViewStyle(.verticalPage)
             .toolbar {
@@ -68,11 +68,19 @@ private struct DPadPage: View {
                 key(.down, "chevron.down").offset(y: d * 0.32)
                 key(.left, "chevron.left").offset(x: -d * 0.32)
                 key(.right, "chevron.right").offset(x: d * 0.32)
-                Button { s.press(.ok) } label: {
+                // Tap = OK, press and hold = Home (like Apple's TV remote).
+                VStack(spacing: 1) {
                     Text("OK").font(.system(.headline, design: .rounded).weight(.bold))
-                        .frame(width: d * 0.38, height: d * 0.38).background(accent, in: Circle())
+                    Image(systemName: "house.fill").font(.system(size: 9)).opacity(0.75)
                 }
-                .buttonStyle(.plain)
+                .frame(width: d * 0.4, height: d * 0.4).background(accent, in: Circle())
+                .onTapGesture { s.press(.ok) }
+                .onLongPressGesture(minimumDuration: 0.5) { s.press(.home) }
+                .accessibilityElement()
+                .accessibilityLabel("OK")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction { s.press(.ok) }
+                .accessibilityAction(named: "Home") { s.press(.home) }
             }
             .frame(width: d, height: d)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -96,17 +104,18 @@ private struct DPadPage: View {
 
 private struct ControlsPage: View {
     @EnvironmentObject var s: WatchSession
-    private let items: [(Key, String)] = [(.back, "arrow.uturn.backward"), (.home, "house.fill"), (.playPause, "playpause.fill"),
-                                          (.volDown, "speaker.minus.fill"), (.mute, "speaker.slash.fill"), (.volUp, "speaker.plus.fill"),
-                                          (.chDown, "chevron.down"), (.power, "power"), (.chUp, "chevron.up")]
+    // Only the essentials, as big targets; Home is a long press on OK, volume is also on the Crown.
+    private let items: [(Key, String)] = [(.back, "arrow.uturn.backward"), (.playPause, "playpause.fill"),
+                                          (.mute, "speaker.slash.fill"), (.power, "power"),
+                                          (.volDown, "speaker.minus.fill"), (.volUp, "speaker.plus.fill")]
 
     var body: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) {
             ForEach(items, id: \.0) { k, icon in
                 Button { s.press(k) } label: {
-                    Image(systemName: icon).font(.body.weight(.semibold))
+                    Image(systemName: icon).font(.title3.weight(.semibold))
                         .foregroundStyle(k == .power ? .red : .primary)
-                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .frame(maxWidth: .infinity, minHeight: 48)
                 }
                 .buttonStyle(.bordered)
                 .accessibilityLabel(k.label)
