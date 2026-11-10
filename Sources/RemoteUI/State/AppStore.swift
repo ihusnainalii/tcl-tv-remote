@@ -170,7 +170,12 @@ public final class Store: ObservableObject {
         guard let p = remote as? PairingCapable else { return }
         go(.pairing)
         Task {
-            do { try await p.startPairing() } catch { show(L10n.Toast.pairingFailed(UserFacingError.message(for: error)), long: true); go(.remote) }
+            do {
+                try await p.startPairing()
+            } catch {
+                show(L10n.Toast.pairingFailed(UserFacingError.message(for: error)), long: true)
+                go(.remote)
+            }
         }
     }
 
