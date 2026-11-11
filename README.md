@@ -1,16 +1,18 @@
 <p align="center"><img src="docs/icon.png" width="128" alt="TCL Remote icon"></p>
 
-<h1 align="center">TCL Remote for Mac</h1>
+<h1 align="center">TCL Remote</h1>
 
 <p align="center">
-A native remote for TCL TVs: a macOS menu bar app, plus an iPhone and iPad app.<br>
-It finds your TV on the local network, pairs once, remembers it, and reconnects on its own,<br>
-so your keyboard and trackpad become the remote.
+A native remote for TCL TVs on macOS, iOS, iPadOS and watchOS:<br>
+a Mac menu bar app, an iPhone and iPad app with a Home Screen widget, and an Apple Watch app.<br>
+It finds your TV on the local network, pairs once, remembers it, and reconnects on its own.
 </p>
 
 <p align="center">
 <a href="https://github.com/ihusnainalii/tcl-tv-remote/actions/workflows/ci.yml"><img src="https://github.com/ihusnainalii/tcl-tv-remote/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 <img src="https://img.shields.io/badge/macOS-15%2B-black" alt="macOS 15+">
+<img src="https://img.shields.io/badge/iOS%20%26%20iPadOS-18%2B-blue" alt="iOS and iPadOS 18+">
+<img src="https://img.shields.io/badge/watchOS-11%2B-red" alt="watchOS 11+">
 <img src="https://img.shields.io/badge/Swift-6-orange" alt="Swift 6">
 <img src="https://img.shields.io/badge/coverage-90%25%2B-brightgreen" alt="Coverage 90%+">
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"></a>
