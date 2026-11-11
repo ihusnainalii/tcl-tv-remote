@@ -18,10 +18,11 @@ so your keyboard and trackpad become the remote.
 </p>
 
 <p align="center">
-<img src="docs/screenshots/remote.png" width="260" alt="Remote with app launcher">
-<img src="docs/screenshots/light-ocean.png" width="260" alt="Light mode with the Ocean theme and keypad">
-<img src="docs/screenshots/themes.png" width="260" alt="Color themes in Settings">
+<img src="docs/screenshots/remote.png" width="230" alt="Mac menu bar remote">
+<img src="docs/screenshots/iphone-remote.png" width="230" alt="iPhone remote">
+<img src="docs/screenshots/watch-remote.png" width="170" alt="Apple Watch remote">
 </p>
+<p align="center"><img src="docs/screenshots/ipad-remote.png" width="560" alt="iPad two-column remote"></p>
 
 ## Contents
 - [Supported TVs](#supported-tvs)
@@ -71,7 +72,7 @@ A native iPhone and iPad app shares every rule, protocol driver and component wi
 - **Walkthrough** on first launch: four short pages on finding, pairing and controlling your TV. Replay it from Settings → About.
 - **Tab bar:** iPhone has Remote, Apps, Keys and Settings at the bottom. iPad only needs Remote and Settings, at the top, because its Remote tab already includes apps and keys.
 - **App icon and launch screen** use the TCL Remote TV icon.
-- **Remote tab:** fills the screen with no scrolling. It has a large arrow pad or a **touchpad** (swipe to move, with each swipe step one arrow press and a haptic tap; tap to select), big buttons for back, home, search and settings, a volume/media/channel cluster, the live volume bar, and **a row of your apps** at the bottom. Everything scales to the screen, from iPhone SE to Pro Max.
+- **Remote tab:** fills the screen with no scrolling. It has a large arrow pad or a **touchpad** (swipe to move, with each swipe step one arrow press and a haptic tap; tap to select), big volume and channel rockers on the sides with a wide Home button and back, mute, search, rewind, settings and forward between them, the live volume bar, and **a row of your apps** at the bottom. Everything scales to the screen, from iPhone SE to Pro Max.
 - **TV switcher** in the navigation bar: switch between saved TVs or find new ones. Pairing opens as a sheet.
 - **iPad:** a two-column remote. The controls fill the left column with even spacing; your apps, the live keyboard, the number pad and the extra keys fill the right.
 - **Keys tab:** a live keyboard for the TV's text boxes, a number pad, and extra keys (guide, captions, stop, power on/off).
@@ -83,7 +84,9 @@ Small and medium widgets with power, home, play/pause, mute and volume. Tapping 
 
 ### Apple Watch
 
-A companion watch app with an arrow pad and OK, the **Digital Crown for volume**, a controls page (back, home, play/pause, mute, channels, power) and your apps.
+<p align="center"><img src="docs/screenshots/watch-remote.png" width="200" alt="Arrow pad with Home and Back on Apple Watch"></p>
+
+A companion watch app with an arrow pad, OK in the centre and **Home and Back** in the bottom corners, the **Digital Crown for volume**, a controls page (back, play/pause, mute, power, volume) and your apps.
 
 watchOS doesn't allow the secure socket connection Google TV needs, so the watch sends each button press **through the iPhone app**, which wakes in the background. The iPhone must be nearby, and you pair TVs on the iPhone. **Roku** TVs use plain HTTP, so the watch controls them directly when the iPhone isn't reachable.
 
@@ -143,9 +146,23 @@ Pick a scheme: **TCL Remote iOS** (iPhone and iPad, with the widget), **TCL Remo
 |---|---|
 | <img src="docs/screenshots/settings.png" width="250" alt="General settings"> | <img src="docs/screenshots/themes.png" width="250" alt="Color themes"> |
 
-**iPhone and iPad:** see [iPhone and iPad](#iphone-and-ipad).
+**iPhone**
 
-Regenerate the Mac screenshots with `scripts/screenshots.sh` (needs a built app and a reachable TV). The iOS screenshots come from the Simulator (`xcrun simctl io <device> screenshot`).
+| Remote | Apps | Keys | Settings |
+|---|---|---|---|
+| <img src="docs/screenshots/iphone-remote.png" width="190" alt="Remote tab on iPhone"> | <img src="docs/screenshots/iphone-apps.png" width="190" alt="Apps tab on iPhone"> | <img src="docs/screenshots/iphone-keys.png" width="190" alt="Keys tab on iPhone"> | <img src="docs/screenshots/iphone-settings.png" width="190" alt="Settings tab on iPhone"> |
+
+**iPad**
+
+| Remote | Finding a TV |
+|---|---|
+| <img src="docs/screenshots/ipad-remote.png" width="380" alt="Two-column remote on iPad"> | <img src="docs/screenshots/ipad-welcome.png" width="380" alt="Finding a TV on iPad"> |
+
+**Apple Watch**
+
+<img src="docs/screenshots/watch-remote.png" width="200" alt="Arrow pad with Home and Back on Apple Watch">
+
+Regenerate the Mac screenshots with `scripts/screenshots.sh` (needs a built app and a reachable TV). The iPhone, iPad and watch screenshots come from the Simulator (`xcrun simctl io <device> screenshot`).
 
 ## Install
 
