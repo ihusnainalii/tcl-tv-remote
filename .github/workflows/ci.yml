@@ -1,8 +1,9 @@
 name: CI
 
 # Staged pipeline. Each job is a required check on main, so a PR merges only when all pass:
-#   Build -> Tests -> Coverage
-#                  -> App bundle
+#   Lint -> Build -> Tests -> Coverage
+#                         -> App bundle
+#                         -> iOS app
 
 on:
   pull_request:
@@ -17,8 +18,27 @@ env:
   COVERAGE_MIN: 90   # TVKit line coverage floor (currently ~97%)
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: |
+          command -v swiftlint >/dev/null || brew install swiftlint
+          command -v swiftgen >/dev/null || brew install swiftgen
+      - name: SwiftLint (strict)
+        run: swiftlint lint --strict --reporter github-actions-logging
+      - name: SwiftGen output is up to date
+        run: |
+          swiftgen config run
+          git diff --exit-code -- Sources/RemoteUI/Generated || {
+            echo "::error title=SwiftGen out of date::Run 'swiftgen' and commit Sources/RemoteUI/Generated"; exit 1; }
+
   build:
     name: Build
+    needs: lint
     runs-on: macos-15
     timeout-minutes: 15
     steps:
@@ -72,6 +92,30 @@ jobs:
           name: coverage
       - name: Coverage gate
         run: python3 scripts/ci_report.py coverage coverage.json --min "$COVERAGE_MIN"
+
+  ios:
+    name: iOS app
+    needs: test
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: command -v xcodegen >/dev/null || brew install xcodegen
+      - name: Generate project
+        run: cd iOS && xcodegen generate
+      - name: Build for iPhone and iPad (Simulator)
+        run: |
+          cd iOS
+          xcodebuild -project TCLRemote.xcodeproj -scheme "TCL Remote iOS" \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath ../.build/ios \
+            CODE_SIGNING_ALLOWED=NO -quiet build
+      - name: Build Apple Watch app
+        run: |
+          cd iOS
+          xcodebuild -project TCLRemote.xcodeproj -scheme "TCL Remote watchOS" \
+            -destination 'generic/platform=watchOS' -derivedDataPath ../.build/watch \
+            CODE_SIGNING_ALLOWED=NO -quiet build
 
   app:
     name: App bundle

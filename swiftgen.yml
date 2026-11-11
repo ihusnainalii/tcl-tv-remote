@@ -1,0 +1,12 @@
+# SwiftGen: type-safe access to resources. Run `swiftgen` after editing Localizable.strings.
+# CI fails if Sources/RemoteUI/Generated is out of date.
+input_dir: Sources/RemoteUI/Resources
+output_dir: Sources/RemoteUI/Generated
+strings:
+  inputs: en.lproj/Localizable.strings
+  outputs:
+    - templateName: structured-swift5
+      output: Strings.swift
+      params:
+        enumName: L10n
+        publicAccess: true   # the Mac and iOS app shells use L10n too

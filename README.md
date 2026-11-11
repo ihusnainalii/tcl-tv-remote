@@ -3,7 +3,7 @@
 <h1 align="center">TCL Remote for Mac</h1>
 
 <p align="center">
-A native macOS menu bar remote for TCL TVs.<br>
+A native remote for TCL TVs: a macOS menu bar app, plus an iPhone and iPad app.<br>
 It finds your TV on the local network, pairs once, remembers it, and reconnects on its own,<br>
 so your keyboard and trackpad become the remote.
 </p>
@@ -18,13 +18,15 @@ so your keyboard and trackpad become the remote.
 </p>
 
 <p align="center">
-<img src="docs/screenshots/remote.png" width="260" alt="Remote with app launcher">
-<img src="docs/screenshots/light-ocean.png" width="260" alt="Light mode with the Ocean theme and keypad">
-<img src="docs/screenshots/themes.png" width="260" alt="Color themes in Settings">
+<img src="docs/screenshots/remote.png" width="230" alt="Mac menu bar remote">
+<img src="docs/screenshots/iphone-remote.png" width="230" alt="iPhone remote">
+<img src="docs/screenshots/watch-remote.png" width="170" alt="Apple Watch remote">
 </p>
+<p align="center"><img src="docs/screenshots/ipad-remote.png" width="560" alt="iPad two-column remote"></p>
 
 ## Contents
 - [Supported TVs](#supported-tvs)
+- [iPhone and iPad](#iphone-and-ipad)
 - [Features](#features)
 - [Screenshots](#screenshots)
 - [Install](#install)
@@ -49,6 +51,59 @@ so your keyboard and trackpad become the remote.
 | **Roku TV** | Roku External Control Protocol (HTTP, port 8060) | None |
 
 Fire TV editions aren't supported yet (see the [Roadmap](#roadmap)). Tested on a TCL Google TV. If you've tried another model, please [let us know](https://github.com/ihusnainalii/tcl-tv-remote/issues/new/choose).
+
+## iPhone and iPad
+
+A native iPhone and iPad app shares every rule, protocol driver and component with the Mac app, with a layout designed for touch.
+
+<p align="center">
+<img src="docs/screenshots/iphone-remote.png" width="200" alt="Remote tab on iPhone">
+<img src="docs/screenshots/iphone-apps.png" width="200" alt="Apps tab on iPhone">
+<img src="docs/screenshots/iphone-keys.png" width="200" alt="Keys tab on iPhone">
+<img src="docs/screenshots/iphone-settings.png" width="200" alt="Settings tab on iPhone">
+<img src="docs/screenshots/iphone-onboarding.png" width="200" alt="First-launch walkthrough">
+</p>
+
+<p align="center">
+<img src="docs/screenshots/ipad-remote.png" width="400" alt="Two-column remote on iPad">
+<img src="docs/screenshots/ipad-welcome.png" width="400" alt="Finding a TV on iPad">
+</p>
+
+- **Walkthrough** on first launch: four short pages on finding, pairing and controlling your TV. Replay it from Settings → About.
+- **Tab bar:** iPhone has Remote, Apps, Keys and Settings at the bottom. iPad only needs Remote and Settings, at the top, because its Remote tab already includes apps and keys.
+- **App icon and launch screen** use the TCL Remote TV icon.
+- **Remote tab:** fills the screen with no scrolling. It has a large arrow pad or a **touchpad** (swipe to move, with each swipe step one arrow press and a haptic tap; tap to select), big volume and channel rockers on the sides with a wide Home button and back, mute, search, rewind, settings and forward between them, the live volume bar, and **a row of your apps** at the bottom. Everything scales to the screen, from iPhone SE to Pro Max.
+- **TV switcher** in the navigation bar: switch between saved TVs or find new ones. Pairing opens as a sheet.
+- **iPad:** a two-column remote. The controls fill the left column with even spacing; your apps, the live keyboard, the number pad and the extra keys fill the right.
+- **Keys tab:** a live keyboard for the TV's text boxes, a number pad, and extra keys (guide, captions, stop, power on/off).
+- With a hardware keyboard attached, the same shortcuts as on the Mac work, and Settings lists them.
+
+### Home Screen widget
+
+Small and medium widgets with power, home, play/pause, mute and volume. Tapping a button opens TCL Remote and sends the key to your current TV (`tclremote://key/<key>` links).
+
+### Apple Watch
+
+<p align="center"><img src="docs/screenshots/watch-remote.png" width="200" alt="Arrow pad with Home and Back on Apple Watch"></p>
+
+A companion watch app with an arrow pad, OK in the centre and **Home and Back** in the bottom corners, the **Digital Crown for volume**, a controls page (back, play/pause, mute, power, volume) and your apps.
+
+watchOS doesn't allow the secure socket connection Google TV needs, so the watch sends each button press **through the iPhone app**, which wakes in the background. The iPhone must be nearby, and you pair TVs on the iPhone. **Roku** TVs use plain HTTP, so the watch controls them directly when the iPhone isn't reachable.
+
+### Build and run
+
+```bash
+brew install xcodegen
+cd iOS && xcodegen        # generates TCLRemote.xcodeproj from project.yml
+open TCLRemote.xcodeproj
+```
+
+Pick a scheme: **TCL Remote iOS** (iPhone and iPad, with the widget), **TCL Remote watchOS** or **TCL Remote macOS** (menu bar app). To run on a device, set your team in Xcode. A free Personal Team works, but its builds expire after 7 days.
+
+**Differences from the Mac app:**
+- No launch at login, quit or update check. iOS apps update through the App Store.
+- The pairing certificate is created natively (a self-signed X.509 certificate built in Swift) and kept in the iOS Keychain.
+- Discovering Roku TVs on a real iPhone needs Apple's multicast networking entitlement. Until that's granted, use **Add by IP** for Roku. Google TV discovery works without it.
 
 ## Features
 
@@ -81,6 +136,8 @@ Fire TV editions aren't supported yet (see the [Roadmap](#roadmap)). Tested on a
 
 ## Screenshots
 
+**Mac menu bar**
+
 | Remote and apps | More controls | Light mode, Ocean theme |
 |---|---|---|
 | <img src="docs/screenshots/remote.png" width="250" alt="Remote with app launcher"> | <img src="docs/screenshots/remote-more.png" width="250" alt="More controls tab"> | <img src="docs/screenshots/light-ocean.png" width="250" alt="Light mode with keypad"> |
@@ -89,7 +146,23 @@ Fire TV editions aren't supported yet (see the [Roadmap](#roadmap)). Tested on a
 |---|---|
 | <img src="docs/screenshots/settings.png" width="250" alt="General settings"> | <img src="docs/screenshots/themes.png" width="250" alt="Color themes"> |
 
-Regenerate the screenshots with `scripts/screenshots.sh` (needs a built app and a reachable TV).
+**iPhone**
+
+| Remote | Apps | Keys | Settings |
+|---|---|---|---|
+| <img src="docs/screenshots/iphone-remote.png" width="190" alt="Remote tab on iPhone"> | <img src="docs/screenshots/iphone-apps.png" width="190" alt="Apps tab on iPhone"> | <img src="docs/screenshots/iphone-keys.png" width="190" alt="Keys tab on iPhone"> | <img src="docs/screenshots/iphone-settings.png" width="190" alt="Settings tab on iPhone"> |
+
+**iPad**
+
+| Remote | Finding a TV |
+|---|---|
+| <img src="docs/screenshots/ipad-remote.png" width="380" alt="Two-column remote on iPad"> | <img src="docs/screenshots/ipad-welcome.png" width="380" alt="Finding a TV on iPad"> |
+
+**Apple Watch**
+
+<img src="docs/screenshots/watch-remote.png" width="200" alt="Arrow pad with Home and Back on Apple Watch">
+
+Regenerate the Mac screenshots with `scripts/screenshots.sh` (needs a built app and a reachable TV). The iPhone, iPad and watch screenshots come from the Simulator (`xcrun simctl io <device> screenshot`).
 
 ## Install
 
@@ -173,7 +246,7 @@ To report a vulnerability privately, see [SECURITY.md](SECURITY.md).
 
 ## Architecture
 
-The code is split into two modules, and dependencies only point one way: the app depends on `TVKit`, never the reverse.
+The code is split into layers, and dependencies only point one way: the app shells depend on `RemoteUI`, `RemoteUI` depends on `TVKit`, and `TVKit` depends on nothing but Apple frameworks. TVKit and RemoteUI build for macOS, iOS and iPadOS.
 
 ```
 Sources/
@@ -185,11 +258,15 @@ Sources/
     Persistence/TVRepository   storage interface + UserDefaults implementation
     AndroidTV/  Roku/          protocol drivers (the only platform-specific code)
     Discovery/  Apps/  Updates/
-  TCLRemote/                   menu bar app
-    App/                       entry point, status item + popover
+  RemoteUI/                    shared SwiftUI UI for macOS, iOS and iPadOS
     State/AppStore             presentation state; coordinates TVKit and system services
-    Services/                  connectivity monitor, notifications, login item, preferences
-    Presentation/              SwiftUI screens and components
+    Services/                  connectivity monitor, notifications, login item, preferences, platform shims
+    Presentation/Components    shared parts: arrow pad, rockers, keys, keypad, typing, volume bar, themes
+    Presentation/Screens       Mac panel screens (remote, TVs, pairing, settings, apps)
+    Presentation/Mobile        iPhone/iPad layout: tab bar, touchpad, two-column iPad remote
+    Resources/ + Generated/    Localizable.strings and SwiftGen's L10n
+  TCLRemote/App/               Mac menu bar shell: status item + popover
+iOS/                           iPhone/iPad shell (XcodeGen project.yml + App/)
 Tests/TVKitTests/              unit tests, fake TVs on localhost, opt-in live-TV test
 ```
 
@@ -200,6 +277,9 @@ Tests/TVKitTests/              unit tests, fake TVs on localhost, opt-in live-TV
 ## Development
 
 ```bash
+brew install swiftlint swiftgen                         # tools used by CI
+swiftlint                                               # lint (CI runs it with --strict)
+swiftgen                                                # regenerate L10n after editing Localizable.strings
 swift test                                              # all tests (uses fake TVs on localhost)
 TV_HOST=192.168.1.20 swift test --filter LiveTVTests    # also test a real Google TV
 ```
@@ -214,10 +294,12 @@ TV_HOST=192.168.1.20 swift test --filter LiveTVTests    # also test a real Googl
 - `scripts/build.sh` builds a universal app. `VERSION=1.2.0` stamps the version; `SIGN_IDENTITY="Developer ID Application: …"` signs it with the hardened runtime (otherwise ad-hoc).
 - `scripts/make-dmg.sh` packages `build/TCLRemote-<version>.dmg`. `NOTARY_PROFILE` (from `xcrun notarytool store-credentials`) notarizes and staples it.
 - **CI** ([`ci.yml`](.github/workflows/ci.yml)) runs on every pull request and every push to `main`, in stages. Each stage is a required check, so a PR can only merge once all of them pass:
-  1. **Build**: compiles the package and tests
-  2. **Tests**: runs every test, marks each failure on the PR, and writes a results summary
-  3. **Coverage**: fails if TVKit line coverage drops below **90%**, with a per-file summary
-  4. **App bundle**: builds the universal app and attaches it to the run
+  1. **Lint**: SwiftLint in strict mode, plus a check that SwiftGen's generated code is up to date
+  2. **Build**: compiles the package and tests
+  3. **Tests**: runs every test, marks each failure on the PR, and writes a results summary
+  4. **Coverage**: fails if TVKit line coverage drops below **90%**, with a per-file summary
+  5. **App bundle**: builds the universal Mac app and attaches it to the run
+  6. **iOS app**: generates the Xcode project and builds the iPhone/iPad app
 - **Releases:** pushing a tag such as `v1.1.0` runs [`release.yml`](.github/workflows/release.yml), which builds the DMG and publishes a GitHub release. It signs and notarizes when these repository secrets exist: `MACOS_CERT_P12` (base64 Developer ID `.p12`), `MACOS_CERT_PASSWORD`, `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD`.
 
 ## Roadmap
@@ -239,7 +321,8 @@ This project is **open to contributions**: bug reports, ideas, docs and code are
 - **Testing on real TVs:** tell us your TCL model and whether pairing, keys, volume and apps work.
 - **Items from the [Roadmap](#roadmap)**, especially Fire TV and real text input.
 - **More app links** for the Google TV picker (`AppCatalog`).
-- **Translations and accessibility** improvements.
+- **Translations:** all UI text is in `Sources/TCLRemote/Resources/en.lproj/Localizable.strings`. Add a `<language>.lproj` copy to translate the app.
+- **Accessibility** improvements.
 
 Look for issues labelled [`good first issue`](https://github.com/ihusnainalii/tcl-tv-remote/labels/good%20first%20issue) or [`help wanted`](https://github.com/ihusnainalii/tcl-tv-remote/labels/help%20wanted). CI requires 90% TVKit coverage and no failing tests, so new code needs tests.
 

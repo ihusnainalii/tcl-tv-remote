@@ -12,8 +12,13 @@ APP="build/TCL Remote.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/"
-cp Info.plist "$APP/Contents/"
+# Info.plist is shared with the Xcode target (XcodeGen), so fill in its build-setting placeholders.
+sed -e 's/$(DEVELOPMENT_LANGUAGE)/en/' -e 's/$(EXECUTABLE_NAME)/TCLRemote/' -e 's/$(PRODUCT_NAME)/TCLRemote/' \
+    -e 's/$(PRODUCT_BUNDLE_IDENTIFIER)/app.tclremote.mac/' -e 's/$(PRODUCT_BUNDLE_PACKAGE_TYPE)/APPL/' \
+    Info.plist > "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/"
+# SwiftPM resource bundle (Localizable.strings for SwiftGen's L10n); the app can't start without it.
+cp -R "$(dirname "$BIN")/TCLRemote_RemoteUI.bundle" "$APP/Contents/Resources/"
 if [[ -n "${VERSION:-}" ]]; then
   /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION#v}" "$APP/Contents/Info.plist"
   /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER:-1}" "$APP/Contents/Info.plist"

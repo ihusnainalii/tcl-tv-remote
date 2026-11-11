@@ -47,9 +47,12 @@ public final class RokuRemote: TVRemote {
 
     // MARK: parsing (pure, unit-tested)
 
+    // The patterns are constant, so failing to compile them is a programmer error.
+    // swiftlint:disable:next force_try
+    private static let appPattern = try! Regex(#"<app id="([^"]+)"[^>]*>([^<]+)</app>"#)
+
     static func parseApps(_ xml: String, base: String) -> [TVApp] {
-        let re = try! Regex(#"<app id="([^"]+)"[^>]*>([^<]+)</app>"#)
-        return xml.matches(of: re).compactMap { m in
+        xml.matches(of: appPattern).compactMap { m in
             guard let id = m[1].substring, let name = m[2].substring else { return nil }
             return TVApp(id: String(id), name: String(name).replacingOccurrences(of: "&amp;", with: "&"),
                          icon: URL(string: base + "query/icon/\(id)"))
@@ -59,9 +62,10 @@ public final class RokuRemote: TVRemote {
     /// Prefers the name the user gave the TV, then the friendly name, then the model.
     static func parseName(_ xml: String) -> String? {
         for tag in ["user-device-name", "friendly-device-name", "model-name"] {
-            if let m = xml.firstMatch(of: try! Regex("<\(tag)>([^<]+)</\(tag)>")), let s = m[1].substring, !s.isEmpty {
-                return String(s)
-            }
+            guard let open = xml.range(of: "<\(tag)>"), let close = xml.range(of: "</\(tag)>", range: open.upperBound..<xml.endIndex)
+            else { continue }
+            let value = xml[open.upperBound..<close.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)
+            if !value.isEmpty { return value }
         }
         return nil
     }

@@ -17,8 +17,10 @@ enum TestIdentity {
               let id = (items as? [[String: Any]])?.first?[kSecImportItemIdentity as String] else {
             throw TVError.identity("test identity")
         }
-        cached = (id as! SecIdentity)
-        return cached!
+        // SecIdentity is a CF type, so the cast always succeeds.
+        let identity = id as! SecIdentity // swiftlint:disable:this force_cast
+        cached = identity
+        return identity
     }
 
     static func rsa(_ id: SecIdentity) -> (Data, Data) {

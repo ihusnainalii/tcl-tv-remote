@@ -1,0 +1,120 @@
+# XcodeGen spec: one project, one scheme per platform (TCL Remote iOS / watchOS / macOS).
+# Generate it with:  cd iOS && xcodegen   then open TCLRemote.xcodeproj
+name: TCLRemote
+options:
+  bundleIdPrefix: app.tclremote
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+packages:
+  TCLRemoteKit:
+    path: ..
+targets:
+  TCL Remote iOS:
+    type: application
+    platform: iOS
+    sources:
+      - App
+    dependencies:
+      - package: TCLRemoteKit
+        product: RemoteUI
+      - target: TCL Remote Widget
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: TCL Remote
+        CFBundleShortVersionString: "1.1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen:
+          UIImageName: LaunchLogo
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UISupportedInterfaceOrientations~ipad:
+          [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown,
+           UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        NSLocalNetworkUsageDescription: TCL Remote finds and controls TVs on your local network.
+        NSFaceIDUsageDescription: Unlock TCL Remote with Face ID when the lock is turned on in Settings.
+        NSBonjourServices: [_androidtvremote2._tcp]
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleURLTypes:
+          - CFBundleURLName: app.tclremote.ios
+            CFBundleURLSchemes: [tclremote]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.tclremote.ios
+        PRODUCT_NAME: TCL Remote
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Automatic
+        # Set your team to run on a device: DEVELOPMENT_TEAM: ABCDE12345
+
+  # Home Screen widget (iPhone and iPad): one-tap remote buttons that open the app via tclremote:// links.
+  TCL Remote Widget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Widget
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: TCL Remote
+        CFBundleShortVersionString: "1.1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.tclremote.ios.widget
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Automatic
+
+  # Apple Watch companion: D-pad, Digital Crown volume, controls and apps; relays through the iPhone app.
+  TCL Remote watchOS:
+    type: application
+    platform: watchOS
+    deploymentTarget: "11.0"
+    sources:
+      - Watch
+    dependencies:
+      - package: TCLRemoteKit
+        product: TVKit
+    info:
+      path: Watch/Info.plist
+      properties:
+        CFBundleDisplayName: TCL Remote
+        CFBundleShortVersionString: "1.1.0"
+        CFBundleVersion: "1"
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: app.tclremote.ios
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.tclremote.ios.watchkitapp
+        PRODUCT_NAME: TCL Remote
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Automatic
+
+  # Mac menu bar app (same code as `swift run` / scripts/build.sh).
+  TCL Remote macOS:
+    type: application
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: ../Sources/TCLRemote/App
+      - path: ../Resources/AppIcon.icns
+        buildPhase: resources
+    dependencies:
+      - package: TCLRemoteKit
+        product: RemoteUI
+      - package: TCLRemoteKit
+        product: TVKit
+    info:
+      path: ../Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.tclremote.mac
+        PRODUCT_NAME: TCLRemote
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_HARDENED_RUNTIME: NO

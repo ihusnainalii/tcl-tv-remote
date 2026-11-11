@@ -1,5 +1,10 @@
+// The Mac menu bar app. Only macOS has AppKit and menu bar extras; when Xcode builds the package for
+// iOS or watchOS (e.g. the TCLRemote-Package scheme with an iPhone selected) this target compiles to a
+// placeholder. The iPhone, iPad and Apple Watch apps live in iOS/ (open TCLRemoteiOS.xcodeproj).
+#if os(macOS)
 import AppKit
 import Combine
+import RemoteUI
 import SwiftUI
 import TVKit
 
@@ -23,7 +28,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var appearanceObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        appearanceObserver = NotificationCenter.default.addObserver(forName: AppearanceMode.changed, object: nil, queue: .main) { [weak self] _ in
+        appearanceObserver = NotificationCenter.default.addObserver(
+            forName: AppearanceMode.changed, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.popover.appearance = AppearanceMode.current.nsAppearance }
         }
         AppearanceMode.apply()
@@ -38,11 +44,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         statusItem.button?.action = #selector(toggle)
         statusItem.button?.target = self
 
-
-
         linkObserver = store.$link.sink { [weak self] link in
             let name = link == .connected ? "appletvremote.gen4.fill" : "appletvremote.gen4"
-            self?.statusItem.button?.image = NSImage(systemSymbolName: name, accessibilityDescription: "TCL Remote")
+            self?.statusItem.button?.image = NSImage(systemSymbolName: name, accessibilityDescription: L10n.App.name)
         }
 
         // Testing and screenshot aid: open the panel at launch, optionally on a given screen.
@@ -67,3 +71,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     func popoverDidClose(_ notification: Notification) { statusItem.button?.highlight(false) }
 }
+#else
+@main
+enum TCLRemoteMacOnly {
+    static func main() {
+        print("TCL Remote's menu bar app runs on macOS. For iPhone, iPad and Apple Watch, open iOS/TCLRemoteiOS.xcodeproj.")
+    }
+}
+#endif

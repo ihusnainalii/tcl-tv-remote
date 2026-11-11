@@ -33,8 +33,14 @@ final class HTTPTests: XCTestCase {
     func testRokuErrors() async {
         let roku = RokuRemote(host: "10.0.0.7")
         StubURLProtocol.on("POST /keypress/Up", status: 503)
-        do { try await roku.press(.up); XCTFail() } catch TVError.rejected(let s) { XCTAssertEqual(s, "HTTP 503") } catch { XCTFail("\(error)") }
-        do { try await roku.press(.guide); XCTFail() } catch TVError.unsupported(let k) { XCTAssertEqual(k, "Guide") } catch { XCTFail("\(error)") }
+        do {
+            try await roku.press(.up)
+            XCTFail("HTTP 503 should be an error")
+        } catch TVError.rejected(let s) { XCTAssertEqual(s, "HTTP 503") } catch { XCTFail("unexpected \(error)") }
+        do {
+            try await roku.press(.guide)
+            XCTFail("Roku has no Guide key")
+        } catch TVError.unsupported(let k) { XCTAssertEqual(k, "Guide") } catch { XCTFail("unexpected \(error)") }
         StubURLProtocol.failAll = true
         let apps = await roku.apps()
         XCTAssertEqual(apps, [], "unreachable TV lists no apps")

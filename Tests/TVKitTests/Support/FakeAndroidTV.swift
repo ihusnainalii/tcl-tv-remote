@@ -34,7 +34,8 @@ final class FakeAndroidTV: @unchecked Sendable {
         remoteListener.newConnectionHandler = { [weak self] c in self?.accept(c, pairing: false) }
         pairListener.start(queue: queue)
         remoteListener.start(queue: queue)
-        guard await eventually(.seconds(5), { (self.pairListener.port?.rawValue ?? 0) > 0 && (self.remoteListener.port?.rawValue ?? 0) > 0 }) else {
+        let listening = { (self.pairListener.port?.rawValue ?? 0) > 0 && (self.remoteListener.port?.rawValue ?? 0) > 0 }
+        guard await eventually(.seconds(5), listening) else {
             throw TVError.timeout
         }
         pairingPort = pairListener.port!.rawValue

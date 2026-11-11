@@ -1,5 +1,3 @@
-
-
 import Foundation
 
 /// Minimal protobuf wire-format writer: Android TV Remote v2 only needs varints and length-delimited fields.
