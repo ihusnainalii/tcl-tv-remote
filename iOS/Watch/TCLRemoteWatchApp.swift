@@ -53,7 +53,7 @@ struct WatchRootView: View {
     }
 }
 
-/// D-pad with OK; turning the Digital Crown changes the volume one step per notch.
+/// D-pad with OK, Home and Back in the bottom corners; turning the Digital Crown changes the volume one step per notch.
 private struct DPadPage: View {
     @EnvironmentObject var s: WatchSession
     @State private var crown = 0.0
@@ -61,29 +61,29 @@ private struct DPadPage: View {
 
     var body: some View {
         GeometryReader { g in
-            let d = min(g.size.width, g.size.height)
+            let d = min(g.size.width, g.size.height * 0.86)
             ZStack {
                 Circle().fill(.white.opacity(0.08))
                 key(.up, "chevron.up").offset(y: -d * 0.32)
                 key(.down, "chevron.down").offset(y: d * 0.32)
                 key(.left, "chevron.left").offset(x: -d * 0.32)
                 key(.right, "chevron.right").offset(x: d * 0.32)
-                // Tap = OK, press and hold = Home (like Apple's TV remote).
-                VStack(spacing: 1) {
+                Button { s.press(.ok) } label: {
                     Text("OK").font(.system(.headline, design: .rounded).weight(.bold))
-                    Image(systemName: "house.fill").font(.system(size: 9)).opacity(0.75)
+                        .frame(width: d * 0.4, height: d * 0.4).background(accent, in: Circle())
                 }
-                .frame(width: d * 0.4, height: d * 0.4).background(accent, in: Circle())
-                .onTapGesture { s.press(.ok) }
-                .onLongPressGesture(minimumDuration: 0.5) { s.press(.home) }
-                .accessibilityElement()
-                .accessibilityLabel("OK")
-                .accessibilityAddTraits(.isButton)
-                .accessibilityAction { s.press(.ok) }
-                .accessibilityAction(named: "Home") { s.press(.home) }
+                .buttonStyle(.plain)
             }
             .frame(width: d, height: d)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            // Home and Back sit in the bottom corners, under the ring.
+            .overlay(alignment: .bottom) {
+                HStack {
+                    corner(.home, "house.fill")
+                    Spacer()
+                    corner(.back, "arrow.uturn.backward")
+                }
+            }
         }
         .focusable()
         .digitalCrownRotation($crown, from: -1000, through: 1000, by: 1, sensitivity: .medium, isContinuous: true)
@@ -91,6 +91,15 @@ private struct DPadPage: View {
             while value - sent >= 1 { s.press(.volUp); sent += 1 }
             while sent - value >= 1 { s.press(.volDown); sent -= 1 }
         }
+    }
+
+    func corner(_ k: Key, _ icon: String) -> some View {
+        Button { s.press(k) } label: {
+            Image(systemName: icon).font(.body.weight(.semibold)).frame(width: 40, height: 40)
+                .background(.white.opacity(0.12), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(k.label)
     }
 
     func key(_ k: Key, _ icon: String) -> some View {
@@ -104,7 +113,7 @@ private struct DPadPage: View {
 
 private struct ControlsPage: View {
     @EnvironmentObject var s: WatchSession
-    // Only the essentials, as big targets; Home is a long press on OK, volume is also on the Crown.
+    // Only the essentials, as big targets; Home and Back are also on the D-pad page, volume on the Crown.
     private let items: [(Key, String)] = [(.back, "arrow.uturn.backward"), (.playPause, "playpause.fill"),
                                           (.mute, "speaker.slash.fill"), (.power, "power"),
                                           (.volDown, "speaker.minus.fill"), (.volUp, "speaker.plus.fill")]

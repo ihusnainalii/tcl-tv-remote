@@ -38,30 +38,29 @@ struct RemoteView: View {
                 PowerButton()
                 Spacer()
                 InputMenu()
-                RemoteKey(.search, "magnifyingglass", size: 38, circle: true)
-                RemoteKey(.settings, "gearshape", size: 38, circle: true)
             }
 
             DPad()
 
-            HStack(spacing: 10) {
-                RemoteKey(.back, "arrow.uturn.backward")
-                RemoteKey(.home, "house.fill")
-                RemoteKey(.info, "info.circle")
-            }
-
+            // Same arrangement as iPhone/iPad: big rockers, Home first in the middle.
             HStack(alignment: .center, spacing: 10) {
                 Rocker(up: .volUp, down: .volDown, upIcon: "speaker.plus.fill", downIcon: "speaker.minus.fill",
-                       label: L10n.Remote.volumeShort)
+                       label: L10n.Remote.volumeShort, height: 124)
                 VStack(spacing: 8) {
-                    RemoteKey(.mute, "speaker.slash.fill")
+                    RemoteKey(.home, "house.fill", size: 38)
+                    HStack(spacing: 6) {
+                        RemoteKey(.back, "arrow.uturn.backward", size: 34)
+                        RemoteKey(.mute, "speaker.slash.fill", size: 34)
+                        RemoteKey(.search, "magnifyingglass", size: 34)
+                    }
                     HStack(spacing: 6) {
                         RemoteKey(.rewind, "backward.fill", size: 34)
-                        RemoteKey(.playPause, "playpause.fill", size: 34)
+                        RemoteKey(.settings, "gearshape", size: 34)
                         RemoteKey(.forward, "forward.fill", size: 34)
                     }
                 }
-                Rocker(up: .chUp, down: .chDown, upIcon: "chevron.up", downIcon: "chevron.down", label: L10n.Remote.channelShort)
+                Rocker(up: .chUp, down: .chDown, upIcon: "chevron.up", downIcon: "chevron.down",
+                       label: L10n.Remote.channelShort, height: 124)
             }
 
             if let v = s.volume { VolumeBar(volume: v).transition(.opacity.combined(with: .move(edge: .top))) }
