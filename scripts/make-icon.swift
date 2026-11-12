@@ -1,4 +1,4 @@
-// Renders the app icon: white TV symbol on the violet accent gradient.
+// Renders the app icon: white TV symbol on TCL red (#ED1C24), like TCL's logo.
 // Usage: swift scripts/make-icon.swift
 //   -> docs/icon.png (README), Resources/AppIcon.icns (Mac), iOS/App/Assets.xcassets/AppIcon.appiconset (iOS)
 import AppKit
@@ -17,8 +17,8 @@ func render(_ size: CGFloat) -> NSBitmapImageRep {
     shadow.shadowBlurRadius = size * 0.03
     shadow.shadowOffset = NSSize(width: 0, height: -size * 0.012)
     NSGraphicsContext.saveGraphicsState(); shadow.set()
-    NSGradient(colors: [NSColor(srgbRed: 0.38, green: 0.45, blue: 1, alpha: 1),
-                        NSColor(srgbRed: 0.66, green: 0.36, blue: 1, alpha: 1)])!.draw(in: path, angle: -45)
+    NSGradient(colors: [NSColor(srgbRed: 0.929, green: 0.11, blue: 0.141, alpha: 1),
+                        NSColor(srgbRed: 0.7, green: 0.07, blue: 0.106, alpha: 1)])!.draw(in: path, angle: -45)
     NSGraphicsContext.restoreGraphicsState()
     // Subtle top highlight.
     NSGradient(colors: [.white.withAlphaComponent(0.18), .white.withAlphaComponent(0)])!.draw(in: path, angle: -90)
@@ -40,8 +40,8 @@ func renderFlat(_ size: CGFloat) -> NSBitmapImageRep {
     NSGraphicsContext.saveGraphicsState()
     NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
     let rect = NSRect(x: 0, y: 0, width: size, height: size)
-    NSGradient(colors: [NSColor(srgbRed: 0.38, green: 0.45, blue: 1, alpha: 1),
-                        NSColor(srgbRed: 0.66, green: 0.36, blue: 1, alpha: 1)])!.draw(in: rect, angle: -45)
+    NSGradient(colors: [NSColor(srgbRed: 0.929, green: 0.11, blue: 0.141, alpha: 1),
+                        NSColor(srgbRed: 0.7, green: 0.07, blue: 0.106, alpha: 1)])!.draw(in: rect, angle: -45)
     let config = NSImage.SymbolConfiguration(pointSize: size * 0.42, weight: .medium).applying(.init(hierarchicalColor: .white))
     if let symbol = NSImage(systemSymbolName: "tv", accessibilityDescription: nil)?.withSymbolConfiguration(config) {
         let s = symbol.size

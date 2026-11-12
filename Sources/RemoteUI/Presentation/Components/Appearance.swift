@@ -5,11 +5,12 @@ import AppKit
 
 /// Accent color presets for the remote, plus a user-picked custom color.
 enum AccentStyle: String, CaseIterable, Identifiable {
-    case violet, ocean, sunset, forest, rose, tclRed, graphite, custom
+    case tclRed, violet, ocean, sunset, forest, rose, graphite, custom
 
     static let key = "accentStyle"
     static let customKey = "accentCustom"
-    static var current: AccentStyle { AccentStyle(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .violet }
+    /// TCL red unless the user picked another accent.
+    static var current: AccentStyle { AccentStyle(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .tclRed }
 
     var id: String { rawValue }
 
@@ -29,7 +30,7 @@ enum AccentStyle: String, CaseIterable, Identifiable {
         case .sunset: return (rgb(1, 0.5, 0.25), rgb(1, 0.24, 0.5))
         case .forest: return (rgb(0.22, 0.74, 0.42), rgb(0.04, 0.52, 0.5))
         case .rose: return (rgb(1, 0.36, 0.58), rgb(0.72, 0.32, 1))
-        case .tclRed: return (rgb(0.93, 0.13, 0.2), rgb(0.66, 0.05, 0.16))
+        case .tclRed: return (rgb(0.929, 0.11, 0.141), rgb(0.7, 0.07, 0.106)) // #ED1C24, TCL's logo red
         case .graphite: return (rgb(0.5, 0.52, 0.57), rgb(0.27, 0.29, 0.34))
         case .custom: return Self.gradient(from: Self.customColor)
         }

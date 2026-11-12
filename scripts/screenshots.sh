@@ -42,8 +42,8 @@ shot() { # name, launch flag, then key=value defaults
   echo "captured $OUT/$name.png"
 }
 
-shot remote       --open     remoteTab=Apps     accentStyle=violet appearanceMode=dark
-shot remote-more  --open     remoteTab=More     accentStyle=violet appearanceMode=dark
+shot remote       --open     remoteTab=Apps     accentStyle=tclRed appearanceMode=dark
+shot remote-more  --open     remoteTab=More     accentStyle=tclRed appearanceMode=dark
 shot light-ocean  --open     remoteTab=Keypad   accentStyle=ocean  appearanceMode=light
-shot settings     --settings settingsTab=General accentStyle=violet appearanceMode=dark
+shot settings     --settings settingsTab=General accentStyle=tclRed appearanceMode=dark
 shot themes       --settings settingsTab=Look   accentStyle=sunset appearanceMode=dark
