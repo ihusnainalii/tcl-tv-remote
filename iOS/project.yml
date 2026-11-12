@@ -12,12 +12,15 @@ packages:
 targets:
   TCL Remote iOS:
     type: application
+    scheme: {}  # shared scheme, so xcodebuild finds it on every machine
     platform: iOS
     sources:
       - App
     dependencies:
       - package: TCLRemoteKit
         product: RemoteUI
+      - package: TCLRemoteKit
+        product: TVKit
       - target: TCL Remote Widget
     info:
       path: App/Info.plist
@@ -72,6 +75,7 @@ targets:
   # Apple Watch companion: D-pad, Digital Crown volume, controls and apps; relays through the iPhone app.
   TCL Remote watchOS:
     type: application
+    scheme: {}  # shared scheme, so xcodebuild finds it on every machine
     platform: watchOS
     deploymentTarget: "11.0"
     sources:
@@ -98,6 +102,7 @@ targets:
   # Mac menu bar app (same code as `swift run` / scripts/build.sh).
   TCL Remote macOS:
     type: application
+    scheme: {}  # shared scheme, so xcodebuild finds it on every machine
     platform: macOS
     deploymentTarget: "15.0"
     sources:
