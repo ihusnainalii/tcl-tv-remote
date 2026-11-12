@@ -1,3 +1,4 @@
+import AppIntents
 import RemoteUI
 import SwiftUI
 
@@ -9,7 +10,10 @@ struct TCLRemoteiOSApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(style: .fullScreen).environmentObject(store)
-                .onAppear { store.startWatchRelay() }
+                .onAppear {
+                    store.startWatchRelay()
+                    TCLRemoteShortcuts.updateAppShortcutParameters() // refresh the app names Siri knows
+                }
                 .onOpenURL { store.handle(url: $0) }
         }
     }

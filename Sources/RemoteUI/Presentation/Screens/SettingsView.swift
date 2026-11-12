@@ -158,7 +158,7 @@ private struct GeneralSettings: View {
 }
 
 private struct LookSettings: View {
-    @AppStorage(AccentStyle.key) private var style = AccentStyle.violet.rawValue
+    @AppStorage(AccentStyle.key) private var style = AccentStyle.tclRed.rawValue
     @AppStorage(AccentStyle.customKey) private var customHex = ""
     @AppStorage(AppearanceMode.key) private var mode = AppearanceMode.system.rawValue
 

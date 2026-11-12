@@ -78,6 +78,17 @@ A native iPhone and iPad app shares every rule, protocol driver and component wi
 - **Keys tab:** a live keyboard for the TV's text boxes, a number pad, and extra keys (guide, captions, stop, power on/off).
 - With a hardware keyboard attached, the same shortcuts as on the Mac work, and Settings lists them.
 
+### Siri and Shortcuts
+
+TCL Remote's actions work from Siri, the Shortcuts app, Spotlight and the Action Button, without opening the app. They control the TV you used most recently.
+
+- "Turn off the TV with TCL Remote" or "Turn on the TV with TCL Remote"
+- "Turn the TV up with TCL Remote" or "Turn the TV down with TCL Remote" (3 steps; change the step count in Shortcuts)
+- "Open YouTube with TCL Remote", or any app in the app list, including ones you added
+- "Press Home with TCL Remote", or any remote button (Back, OK, arrows, Mute, Play/Pause and more)
+
+In the Shortcuts app you can chain these into automations, such as turning the TV off at bedtime.
+
 ### Home Screen widget
 
 Small and medium widgets with power, home, play/pause, mute and volume. Tapping a button opens TCL Remote and sends the key to your current TV (`tclremote://key/<key>` links).

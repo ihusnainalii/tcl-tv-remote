@@ -11,7 +11,7 @@ struct TCLRemoteWatchApp: App {
     }
 }
 
-private let accent = LinearGradient(colors: [Color(red: 0.38, green: 0.45, blue: 1), Color(red: 0.66, green: 0.36, blue: 1)],
+private let accent = LinearGradient(colors: [Color(red: 0.929, green: 0.11, blue: 0.141), Color(red: 0.7, green: 0.07, blue: 0.106)],
                                     startPoint: .topLeading, endPoint: .bottomTrailing)
 
 /// Three pages, swiped vertically: D-pad (Digital Crown = volume), controls, apps.
